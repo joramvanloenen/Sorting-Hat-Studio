@@ -9,14 +9,14 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="identity"><div class="mark">S<span>H</span></div><div><div class="brand">SORTING HAT <span>STUDIO</span></div><div class="subbrand">BROWSER PREVIEW / EXPORT TO RASPBERRY PI</div></div></div>
-  <div class="top-actions"><div class="connection"><span id="connectionDot" class="dot"></span><span id="connectionText">Connecting…</span></div><button class="ghost" id="saveBtn">Save changes <span class="keyhint">⌘S</span></button><button class="ghost" id="importProjectBtn">Import JSON</button><button class="ghost" id="exportProjectBtn">Export JSON</button><button class="primary" id="ceremonyBtn">✦ Preview ceremony</button><input type="file" id="importProjectFile" accept="application/json,.json" hidden></div>
+  <div class="identity"><div class="mark">S<span>H</span></div><div><div class="brand">SORTING HAT <span>STUDIO</span></div><div class="subbrand">LOCAL AUDIO + MOTION EDITOR · NO CONNECTION NEEDED</div></div></div>
+  <div class="top-actions"><div class="connection"><span id="connectionDot" class="dot"></span><span id="connectionText">LOCAL EDITOR</span></div><button class="ghost quick-upload" id="quickUploadBtn">↑ Audio → Motion</button><button class="ghost" id="saveBtn">Save changes <span class="keyhint">⌘S</span></button><button class="ghost" id="importProjectBtn">Import JSON</button><button class="ghost" id="exportProjectBtn">Export JSON</button><button class="primary" id="ceremonyBtn">✦ Preview ceremony</button><input type="file" id="importProjectFile" accept="application/json,.json" hidden></div>
 </header>
 <div class="layout">
   <aside class="sidebar">
     <div class="section-title">PERFORMANCE LIBRARY <span>06 CLIPS</span></div>
     <div id="clipList" class="clip-list"></div>
-    <div class="sidebar-bottom"><div class="section-title">ACTIVE HARDWARE</div><div class="mini-wire"><span class="pin jaw-pin"></span> GPIO17 <span>Jaw · SG90</span></div><div class="mini-wire"><span class="pin brow-pin"></span> GPIO27 <span>Brows · SG90</span></div><div class="mini-wire"><span class="pin audio-pin"></span> I²S <span>MAX98357A</span></div><p class="help">GitHub Pages is a browser-only editor. Export your project and import it on the Pi for live servos and playback.</p></div>
+    <div class="sidebar-bottom"><div class="section-title">ACTIVE HARDWARE</div><div class="mini-wire"><span class="pin jaw-pin"></span> GPIO17 <span>Jaw · SG90</span></div><div class="mini-wire"><span class="pin brow-pin"></span> GPIO27 <span>Brows · SG90</span></div><div class="mini-wire"><span class="pin audio-pin"></span> I²S <span>MAX98357A</span></div><p class="help">Works in this browser without a Pi. Drop audio onto the hat, preview both servos, and export the performance when ready.</p></div>
   </aside>
   <main class="editor">
     <section class="performance-pane">
@@ -60,12 +60,15 @@
           <label class="field">Motion into next keyframe<select id="keyEase"><option value="smooth">Smooth / Organic</option><option value="linear">Linear</option><option value="hold">Hold / Snap</option></select></label>
           <div class="row"><button id="addKeyBtn" class="ghost small">+ Add at playhead</button><button id="deleteKeyBtn" class="danger small">Delete key</button></div>
           <div class="divider"></div>
-          <span class="eyebrow">AUDIO ASSIST</span><p class="tiny-hint">Generate an editable jaw track from speech energy. This replaces jaw keyframes only.</p>
+          <span class="eyebrow">AUTO PERFORMANCE</span><p class="tiny-hint">Upload a voice recording to generate natural jaw and expressive eyebrow animation. Everything is analyzed locally in your browser.</p>
           <label class="field">Jaw intensity <span id="intensityLabel">80%</span><input type="range" min="20" max="100" value="80" id="jawIntensity" /></label>
           <label class="field">Silence threshold <span id="thresholdLabel">12%</span><input type="range" min="0" max="35" value="12" id="jawThreshold" /></label>
-          <button id="generateBtn" class="secondary-button">✦ Generate jaw keyframes</button>
+          <label class="field">Expression style<select id="motionStyle"><option value="thoughtful" selected>Thoughtful · natural</option><option value="subtle">Subtle · restrained</option><option value="theatrical">Theatrical · dramatic</option></select></label>
+          <label class="field">Eyebrow expression <span id="browIntensityLabel">80%</span><input type="range" min="0" max="100" value="80" id="browIntensity" /></label>
+          <label class="check"><input id="autoGenerate" type="checkbox" checked/> Auto-generate both tracks after import</label>
+          <button id="generateBtn" class="secondary-button">✦ Generate jaw + eyebrows</button>
           <button id="uploadBtn" class="ghost wide">↑ Import dialogue audio</button><input id="audioFile" type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a" hidden />
-          <div class="tip">Tip: exaggerate vowel openings and create intentional pauses. Speech energy provides a starting point, not realistic phoneme lip-sync.</div>
+          <div class="tip">Drop a WAV or MP3 onto the character or use Import dialogue audio. Both tracks remain editable; motion is speech-informed, not phoneme tracking.</div>
         </div>
         <div id="hardwareInspector" class="inspector-content hidden">
           <span class="eyebrow">SERVO CALIBRATION</span><h2>Safe travel limits</h2><p class="dim">Disconnect mechanical linkages before calibrating. Values are pulse widths; narrower ranges protect SG90 gears.</p>
@@ -90,5 +93,6 @@
 <audio id="audio" preload="auto"></audio>
 <div id="toast" class="toast" role="status"></div>
 <script src="./app.js"></script>
+<script src="./auto-motion.js"></script>
 </body>
 </html>
