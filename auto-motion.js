@@ -168,27 +168,30 @@
     uploadStatus.setAttribute('aria-live','polite');
     uploadStatus.style.cssText='padding:10px 12px;margin:7px 0 11px;border:1px solid #494137;border-radius:8px;background:#211f1c;color:#dbcab0;font-size:12px;line-height:1.45;overflow-wrap:anywhere';
     $('uploadBtn').insertAdjacentElement('afterend',uploadStatus);
-    function importStatus(text,kind='neutral'){
+    function importStatus(text,kind='neutral',phase=''){
       uploadStatus.textContent=text;
       uploadStatus.style.borderColor=kind==='error'?'#b45c55':kind==='success'?'#6d895e':'#494137';
       uploadStatus.style.color=kind==='error'?'#ffaba3':kind==='success'?'#c3e6b1':'#dbcab0';
+      if(window.setImportStatus)window.setImportStatus(phase||(kind==='error'?'error':kind==='success'?'ready':'selected'),text);
     }
-    importStatus('Choose an MP3 or WAV file. A new recording will appear in the library automatically.');
+    importStatus('Choose an MP3 or WAV file. A new recording will appear in the library automatically.','neutral','idle');
     let importing=false;
     pagesUploadAudio=async function(file){
       if(!file||importing)return;
       importing=true;
       $('uploadBtn').disabled=true;
       $('uploadBtn').textContent='Decoding MP3 / audio…';
-      importStatus('Opening '+file.name+' ('+(file.size/1048576).toFixed(1)+' MB)…');
+      importStatus('Selected '+file.name+' ('+(file.size/1048576).toFixed(1)+' MB). Opening file…','neutral','selected');
       try{
         if(!state.project||!state.clip)throw Error('Editor not initialized. Refresh the page before importing.');
         if(!/\.(wav|mp3|ogg|m4a|flac|aac|opus)$/i.test(file.name)&&!file.type.startsWith('audio/'))throw Error('Choose an MP3, WAV or another supported audio recording.');
+        importStatus('Decoding '+file.name+' directly in the browser…','neutral','decoding');
         const ctx=audioContext||new (window.AudioContext||window.webkitAudioContext)();audioContext=ctx;
         let decoded;
         try{decoded=await ctx.decodeAudioData((await file.arrayBuffer()).slice(0));}
         catch(e){throw Error('Browser could not decode '+file.name+'. Check that it plays normally as an MP3. '+(e.message||''));}
         if(!Number.isFinite(decoded.duration)||decoded.duration<=0||decoded.duration>600)throw Error('Audio needs to be between 0 and 600 seconds.');
+        importStatus('Decoded '+file.name+' · '+decoded.duration.toFixed(1)+'s. Preparing animation…','neutral','generating');
         if(state.dirty)await saveClip();
         const bare=file.name.replace(/\.[^.]+$/,'').trim()||'New recording';
         const base='import_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
@@ -208,8 +211,9 @@
         audio.load();
         state.audioBuffer=decoded;
         state.peaks=calculatePeaks(decoded);
-        if($('autoGenerate')?.checked!==false)naturalMotion(false);
+        if($('autoGenerate')?.checked!==false){if(!naturalMotion(false))markDirty();}
         else markDirty();
+        importStatus('Saving '+file.name+' and motion keyframes locally…','neutral','saving');
         await saveClip();
         try{localStorage.setItem('sorting-hat-last-clip',base);}catch(e){}
         $('clipTitle').textContent=fresh.title;
@@ -217,14 +221,14 @@
         $('totalTime').textContent=fmt(duration);
         $('trackStats').textContent='Jaw: '+fresh.tracks.jaw.length+' keys · Brows: '+fresh.tracks.brow.length+' keys';
         makeClipList();updateInspector();updateFace();render();
-        importStatus('✓ '+file.name+' imported ('+duration.toFixed(1)+'s). Jaw + eyebrow tracks generated; press ▶ to preview.','success');
+        importStatus('✓ '+file.name+' imported ('+duration.toFixed(1)+'s). Waveform loaded; press ▶ to preview.','success','ready');
         toast('MP3 imported! New clip “'+bare+'” is in the library.');
         // Persist independently of preview: browsers may block storage, but can still animate right now.
         const result=await storedAudio(base,file);
         if(result===null)importStatus('✓ '+file.name+' ready for this session. Browser storage blocked; export your project and audio before closing.','success');
       }catch(e){
         console.error('Sorting Hat import error',e);
-        importStatus('Import failed: '+(e?.message||e),'error');
+        importStatus('Could not import '+file.name+': '+(e?.message||e),'error','error');
         toast('Audio import failed: '+(e?.message||e));
       }finally{
         importing=false;$('uploadBtn').disabled=false;$('uploadBtn').textContent='↑ Import dialogue audio';$('audioFile').value='';

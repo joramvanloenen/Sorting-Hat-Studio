@@ -69,7 +69,11 @@ async function pagesLoadAudio(){
   const decoded=await audioContext.decodeAudioData(bytes.slice(0));
   if(token!==state.loadToken)return;
   state.audioBuffer=decoded;state.peaks=calculatePeaks(decoded);render();
- }catch(e){if(token===state.loadToken)toast('Waveform unavailable: '+e.message)}
+  if(stored&&clipid.startsWith('import_')&&window.setImportStatus)window.setImportStatus('ready',state.clip.title+' · '+decoded.duration.toFixed(1)+'s · Audio and motion restored.');
+ }catch(e){if(token===state.loadToken){
+   if(clipid.startsWith('import_')&&window.setImportStatus)window.setImportStatus('error','Could not reload '+state.clip.title+': '+e.message+'. Re-import the MP3.');
+   toast('Waveform unavailable: '+e.message);
+ }}
 }
 async function pagesUploadAudio(file){
  if(!file)return;
@@ -165,6 +169,7 @@ async function selectClip(id){
  if(state.clip?.id===id)return;
  stopPlayback();if(state.dirty)await saveClip();
  state.clip=getClip(id);state.selected=null;state.time=0;state.peaks=null;state.audioBuffer=null;
+ if(PAGES_MODE){try{localStorage.setItem('sorting-hat-last-clip',id)}catch(e){}}
  makeClipList();$('clipTitle').textContent=state.clip.title;
  $('clipDescription').textContent=state.clip.audio?'Audio loaded · animation editable':'No recorded audio yet · motion preview available';
  $('totalTime').textContent=fmt(state.clip.duration);

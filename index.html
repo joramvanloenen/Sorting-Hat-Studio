@@ -6,12 +6,25 @@
   <meta name="theme-color" content="#101115" />
   <title>Sorting Hat · Motion Studio</title>
   <link rel="stylesheet" href="./style.css" />
+<link rel="stylesheet" href="./import-monitor.css?v=20261116-4" />
 </head>
 <body>
 <header class="topbar">
   <div class="identity"><div class="mark">S<span>H</span></div><div><div class="brand">SORTING HAT <span>STUDIO</span></div><div class="subbrand">LOCAL AUDIO + MOTION EDITOR · NO CONNECTION NEEDED</div></div></div>
   <div class="top-actions"><div class="connection"><span id="connectionDot" class="dot"></span><span id="connectionText">LOCAL EDITOR</span></div><button class="ghost quick-upload" id="quickUploadBtn">↑ Audio → Motion</button><button class="ghost" id="saveBtn">Save changes <span class="keyhint">⌘S</span></button><button class="ghost" id="importProjectBtn">Import JSON</button><button class="ghost" id="exportProjectBtn">Export JSON</button><button class="primary" id="ceremonyBtn">✦ Preview ceremony</button><input type="file" id="importProjectFile" accept="application/json,.json" hidden></div>
 </header>
+<section id="importMonitor" class="import-monitor" data-phase="idle" role="status" aria-live="polite">
+  <div class="import-monitor-icon" id="importMonitorIcon" aria-hidden="true">♫</div>
+  <div class="import-monitor-content">
+    <div class="import-monitor-head"><strong id="importMonitorTitle">No audio imported yet</strong><span id="importMonitorStep">READY</span></div>
+    <div id="importMonitorDetail">Choose an MP3 or WAV file. Import status and any error will appear here.</div>
+  </div>
+  <div class="import-monitor-buttons">
+    <button type="button" class="ghost small" id="importMonitorChoose">↑ Choose audio</button>
+    <button type="button" class="ghost small" id="importMonitorPreview" hidden>▶ Play preview</button>
+  </div>
+  <div class="import-monitor-progress"><div id="importMonitorProgress"></div></div>
+</section>
 <div class="layout">
   <aside class="sidebar">
     <div class="section-title">PERFORMANCE LIBRARY <span>06 CLIPS</span></div>
@@ -92,7 +105,8 @@
 </div>
 <audio id="audio" preload="auto"></audio>
 <div id="toast" class="toast" role="status"></div>
-<script src="./app.js?v=mp3-import-fix-2"></script>
-<script src="./auto-motion.js?v=mp3-import-fix-2"></script>
+<script src="./import-monitor.js?v=20261116-4"></script>
+<script src="./app.js?v=20261116-4"></script>
+<script src="./auto-motion.js?v=20261116-4"></script>
 </body>
 </html>

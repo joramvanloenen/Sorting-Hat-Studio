@@ -1,0 +1,26 @@
+.import-monitor{position:relative;z-index:4;min-height:74px;display:flex;align-items:center;gap:14px;padding:10px 24px 13px;background:#211e1c;border-bottom:1px solid #574935;color:#e9dbca}
+.import-monitor-icon{width:38px;height:38px;flex:none;display:grid;place-items:center;background:#3b3229;border:1px solid #766044;border-radius:10px;color:#f2c788;font-size:21px;font-weight:700}
+.import-monitor-content{min-width:0;flex:1}
+.import-monitor-head{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.import-monitor-head strong{font-size:13px}
+#importMonitorStep{font-size:10px;font-weight:700;letter-spacing:.08em;color:#c0a47a}
+#importMonitorDetail{font-size:11px;color:#c1b2a3;line-height:1.45;margin-top:4px;overflow-wrap:anywhere}
+.import-monitor-buttons{display:flex;align-items:center;gap:8px;flex:none}
+#importMonitorPreview[hidden]{display:none}
+#importMonitorPreview{background:#3a3126;color:#ffe4b7;border-color:#9b7549}
+.import-monitor-progress{position:absolute;bottom:0;left:0;right:0;height:3px;background:#3c342e;overflow:hidden}
+#importMonitorProgress{height:100%;width:0;background:#d7ae70;transition:width .3s}
+.import-monitor[data-phase="selected"] #importMonitorProgress{width:12%}
+.import-monitor[data-phase="decoding"] #importMonitorProgress{width:35%;animation:import-pulse 1.2s ease-in-out infinite alternate}
+.import-monitor[data-phase="generating"] #importMonitorProgress{width:68%;animation:import-pulse 1.2s ease-in-out infinite alternate}
+.import-monitor[data-phase="saving"] #importMonitorProgress{width:87%;animation:import-pulse 1.2s ease-in-out infinite alternate}
+.import-monitor[data-phase="ready"] #importMonitorProgress{width:100%;background:#78bfa0}
+.import-monitor[data-phase="ready"] .import-monitor-icon{color:#c7f7df;border-color:#54785c;background:#263e31}
+.import-monitor[data-phase="error"]{background:#2c2022;border-color:#904d4d}
+.import-monitor[data-phase="error"] .import-monitor-icon{color:#ffbcb6;background:#4a2828;border-color:#9d5757}
+.import-monitor[data-phase="error"] #importMonitorStep{color:#ffaaa0}
+.import-monitor[data-phase="error"] #importMonitorProgress{width:100%;background:#ae5950}
+@keyframes import-pulse{to{opacity:.4}}
+.layout{height:calc(100vh - 144px);min-height:590px}
+@media(max-width:800px){.import-monitor{padding:10px 13px 13px;align-items:start;flex-wrap:wrap;gap:9px}.import-monitor-content{flex-basis:calc(100% - 52px)}.import-monitor-buttons{padding-left:46px;width:100%}.layout{height:auto;min-height:0}}
+@media(prefers-reduced-motion:reduce){.import-monitor #importMonitorProgress{animation:none!important;transition:none}}
