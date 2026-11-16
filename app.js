@@ -447,7 +447,7 @@ async function init(){
  try{
   const [project,settings]=await Promise.all([api('/api/project'),api('/api/settings')]);
   state.project=project;state.settings=settings;
-  const first=project.clips[0];state.clip=null;
+  let lastClip=null;if(PAGES_MODE){try{lastClip=localStorage.getItem('sorting-hat-last-clip')}catch(e){}}const first=project.clips.find(c=>c.id===lastClip)||project.clips[0];state.clip=null;
   buildCalibration();await selectClip(first.id);$('zoomLabel').textContent=state.zoom+' px/s';
   await pollStatus();setInterval(pollStatus,1200);requestAnimationFrame(animate);
  }catch(e){toast('Could not initialize editor: '+e.message);$('connectionText').textContent='Offline'}
