@@ -1,0 +1,20 @@
+{
+  "jaw": {
+    "gpio": 17,
+    "min_us": 1200,
+    "max_us": 1750,
+    "invert": false,
+    "rest": 0.0
+  },
+  "brow": {
+    "gpio": 27,
+    "min_us": 1200,
+    "max_us": 1750,
+    "invert": false,
+    "rest": 0.5
+  },
+  "button_gpio": 22,
+  "audio_latency_ms": 65,
+  "audio_device": "default",
+  "idle_motion": true
+}
