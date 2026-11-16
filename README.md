@@ -8,12 +8,26 @@ A fully local Raspberry Pi Zero W animatronic Sorting Hat: one MAX98357A I²S am
 
 The root `index.html`, `app.js`, `style.css`, `audio/`, `project.json`, and `settings.json` are the static GitHub Pages editor. The `static/`, `server.py`, `hat_core.py`, and `data/` files are for the actual Pi.
 
+## Offline audio-to-motion workflow (GitHub Pages)
+
+Open [Sorting Hat Studio](https://joramvanloenen.github.io/Sorting-Hat-Studio/) in a modern browser. **No connection to the Raspberry Pi is needed.** The online editor processes recordings locally using Web Audio; no audio is uploaded to a server.
+
+1. Click **Audio → Motion** or drop a WAV/MP3/OGG file onto the hat preview.
+2. The browser automatically detects speech and pauses, creates editable **jaw and brow** keyframes, and overlays the waveform.
+3. Press **▶ Play** to hear the recording synchronized with the animated hat. Scrub or drag keyframes to fine-tune it.
+4. Adjust **Thoughtful**, **Subtle**, or **Theatrical** style, jaw intensity, silence threshold, and eyebrow expressiveness; click **Generate jaw + eyebrows** to rebuild the tracks.
+5. Press **Save changes** to preserve the animation in browser storage, or **Export JSON** to take the animation to the Pi.
+
+**Storage and compatibility:** The static editor saves the project in browser localStorage and imported audio in IndexedDB. Keep a copy of your files: private browsing, site-data cleanup, or storage limits can erase them. The JSON export contains keyframes, **not** embedded audio. Download the matching audio separately. The Pi's audio player uses PCM WAV files, so MP3/OGG imports need conversion to WAV when transferring the finished project to the Pi.
+
+The timeline is speech-energy-informed, not a phoneme recognition system. It deliberately varies mouth opening and creates slower phrase-based eyebrow gestures to avoid mechanical flapping. All generated points remain editable.
+
 ## Features
 
 - **Browser timeline editor:** separate jaw and eyebrow tracks, interactive keyframes, smooth/linear/hold easing, playhead seeking, and waveform overlay.
 - **Expression preview:** 2D animated face preview without any Raspberry Pi hardware, with optional live servo preview when running on the Pi.
-- **Audio-assisted jaw animation:** import an MP3/WAV/OGG/M4A/FLAC file; generate an editable jaw envelope using speech amplitude, then manually adjust for emphasis or pauses.
-- **Independent brow acting:** add precise expressive brow keyframes instead of mechanically matching sound volume.
+- **Offline natural audio-to-motion:** import a voice file and automatically generate editable jaw and independent phrase-based eyebrow curves in the browser.
+- **Independent brow acting:** expressive gestures generated around phrase boundaries, with hand-editable keyframes for precise acting.
 - **Standalone performance:** hidden GPIO22 button triggers `intro` → `ponder` → random house announcement. Six clips are already configured. For a fresh checkout, run the demo-audio conversion script (below) to prepare them as WAV files for Pi playback.
 - **Servo calibration:** programmable safe min/max pulse widths, inverted direction, and rest pose.
 - **Adjustable sync offset:** milliseconds of playback latency compensation for `aplay` and the MAX98357A ALSA driver.
