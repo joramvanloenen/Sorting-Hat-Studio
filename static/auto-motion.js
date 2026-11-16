@@ -203,8 +203,9 @@
     const existingUpload=uploadAudio;
     uploadAudio=async function(file){
       if(!file)return;
+      const previousAudio=state.audioBuffer;
       await existingUpload(file);
-      if(state.audioBuffer&&$('autoGenerate')?.checked!==false){naturalMotion(false);await saveClip();toast('Audio imported; natural jaw and eyebrow motion saved to Pi.');}
+      if(state.audioBuffer&&state.audioBuffer!==previousAudio&&$('autoGenerate')?.checked!==false){naturalMotion(false);await saveClip();toast('Audio imported; natural jaw and eyebrow motion saved to Pi.');}
     };
   }
   // Drag and drop on the preview is an alternative to the file button.
