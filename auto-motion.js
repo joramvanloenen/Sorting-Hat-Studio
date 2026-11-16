@@ -131,6 +131,7 @@
 /* Page-side editor integration. The Pi's existing playback engine remains unchanged. */
 (function(){
   'use strict';
+  if(typeof document==='undefined')return;
   const $=id=>document.getElementById(id);
   const isPages=typeof PAGES_MODE!=='undefined'&&PAGES_MODE;
   const motionOptions=()=>({
