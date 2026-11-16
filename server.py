@@ -76,7 +76,7 @@ class HatHandler(BaseHTTPRequestHandler):
                 with f.open("rb") as src:
                     shutil.copyfileobj(src, self.wfile, length=65536)
                 return
-            if path in ("/", "/index.html", "/app.js", "/style.css"):
+            if path in ("/", "/index.html", "/app.js", "/auto-motion.js", "/style.css"):
                 name = "index.html" if path == "/" else path[1:]
                 p = STATIC / name
                 mime = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}[p.suffix]
