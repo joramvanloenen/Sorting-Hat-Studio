@@ -162,36 +162,73 @@
   if(isPages){
     // Fully self-contained: decode and keep the audio in this browser. No Pi requests.
     let currentObjectURL=null;
+    const uploadStatus=document.createElement('div');
+    uploadStatus.id='audioImportStatus';
+    uploadStatus.setAttribute('role','status');
+    uploadStatus.setAttribute('aria-live','polite');
+    uploadStatus.style.cssText='padding:10px 12px;margin:7px 0 11px;border:1px solid #494137;border-radius:8px;background:#211f1c;color:#dbcab0;font-size:12px;line-height:1.45;overflow-wrap:anywhere';
+    $('uploadBtn').insertAdjacentElement('afterend',uploadStatus);
+    function importStatus(text,kind='neutral'){
+      uploadStatus.textContent=text;
+      uploadStatus.style.borderColor=kind==='error'?'#b45c55':kind==='success'?'#6d895e':'#494137';
+      uploadStatus.style.color=kind==='error'?'#ffaba3':kind==='success'?'#c3e6b1':'#dbcab0';
+    }
+    importStatus('Choose an MP3 or WAV file. A new recording will appear in the library automatically.');
+    let importing=false;
     pagesUploadAudio=async function(file){
-      if(!file)return;
-      $('uploadBtn').disabled=true;$('uploadBtn').textContent='Analyzing speech…';
+      if(!file||importing)return;
+      importing=true;
+      $('uploadBtn').disabled=true;
+      $('uploadBtn').textContent='Decoding MP3 / audio…';
+      importStatus('Opening '+file.name+' ('+(file.size/1048576).toFixed(1)+' MB)…');
       try{
-        if(!/\.(wav|mp3|ogg|m4a|flac|aac|opus)$/i.test(file.name)&&!file.type.startsWith('audio/'))throw Error('Choose a supported audio file.');
+        if(!state.project||!state.clip)throw Error('Editor not initialized. Refresh the page before importing.');
+        if(!/\.(wav|mp3|ogg|m4a|flac|aac|opus)$/i.test(file.name)&&!file.type.startsWith('audio/'))throw Error('Choose an MP3, WAV or another supported audio recording.');
         const ctx=audioContext||new (window.AudioContext||window.webkitAudioContext)();audioContext=ctx;
-        const decoded=await ctx.decodeAudioData((await file.arrayBuffer()).slice(0));
-        if(!decoded.duration||decoded.duration>600)throw Error('Choose an audio clip shorter than 10 minutes.');
-        const id=state.clip.id;
-        const stored=await storedAudio(id,file);
+        let decoded;
+        try{decoded=await ctx.decodeAudioData((await file.arrayBuffer()).slice(0));}
+        catch(e){throw Error('Browser could not decode '+file.name+'. Check that it plays normally as an MP3. '+(e.message||''));}
+        if(!Number.isFinite(decoded.duration)||decoded.duration<=0||decoded.duration>600)throw Error('Audio needs to be between 0 and 600 seconds.');
+        if(state.dirty)await saveClip();
+        const bare=file.name.replace(/\.[^.]+$/,'').trim()||'New recording';
+        const base='import_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+        const ext=(file.name.split('.').pop()||'mp3').toLowerCase();
+        const duration=Math.round(decoded.duration*1000)/1000;
+        const fresh={id:base,title:bare.slice(0,75),duration,audio:base+'.'+ext,tracks:{jaw:[{t:0,v:0,ease:'linear'},{t:duration,v:0,ease:'linear'}],brow:[{t:0,v:.5,ease:'smooth'},{t:duration,v:.5,ease:'smooth'}]}};
+        state.project.clips.push(fresh);
+        pagesProject=state.project;
+        state.clip=fresh;
+        state.selected=null;
+        state.time=0;
+        state.loadToken++;
         stopPlayback();
         if(currentObjectURL)URL.revokeObjectURL(currentObjectURL);
         currentObjectURL=URL.createObjectURL(file);
-        audio.src=currentObjectURL;audio.load();
-        state.clip.duration=Math.round(decoded.duration*1000)/1000;
-        state.clip.audio=id+'.'+(file.name.split('.').pop()||'wav').toLowerCase();
-        state.audioBuffer=decoded;state.peaks=calculatePeaks(decoded);
-        state.time=0;
+        audio.src=currentObjectURL;
+        audio.load();
+        state.audioBuffer=decoded;
+        state.peaks=calculatePeaks(decoded);
         if($('autoGenerate')?.checked!==false)naturalMotion(false);
-        else{
-          for(const track of Object.values(state.clip.tracks))for(const key of track)key.t=Math.min(key.t,state.clip.duration);
-          markDirty();
-        }
+        else markDirty();
         await saveClip();
-        $('clipDescription').textContent=`${file.name} · ${decoded.duration.toFixed(1)}s · editable jaw + eyebrows`;
-        $('totalTime').textContent=fmt(state.clip.duration);
+        try{localStorage.setItem('sorting-hat-last-clip',base);}catch(e){}
+        $('clipTitle').textContent=fresh.title;
+        $('clipDescription').textContent=file.name+' · '+duration.toFixed(2)+' sec · MP3/audio ready';
+        $('totalTime').textContent=fmt(duration);
+        $('trackStats').textContent='Jaw: '+fresh.tracks.jaw.length+' keys · Brows: '+fresh.tracks.brow.length+' keys';
         makeClipList();updateInspector();updateFace();render();
-        toast(stored===null?'Audio is ready to preview, but browser storage is unavailable. Download a copy.':'Audio imported and motion generated locally. Press ▶ to watch the hat perform.');
-      }catch(e){toast('Audio import failed: '+e.message);}
-      finally{$('uploadBtn').disabled=false;$('uploadBtn').textContent='↑ Import dialogue audio';$('audioFile').value='';}
+        importStatus('✓ '+file.name+' imported ('+duration.toFixed(1)+'s). Jaw + eyebrow tracks generated; press ▶ to preview.','success');
+        toast('MP3 imported! New clip “'+bare+'” is in the library.');
+        // Persist independently of preview: browsers may block storage, but can still animate right now.
+        const result=await storedAudio(base,file);
+        if(result===null)importStatus('✓ '+file.name+' ready for this session. Browser storage blocked; export your project and audio before closing.','success');
+      }catch(e){
+        console.error('Sorting Hat import error',e);
+        importStatus('Import failed: '+(e?.message||e),'error');
+        toast('Audio import failed: '+(e?.message||e));
+      }finally{
+        importing=false;$('uploadBtn').disabled=false;$('uploadBtn').textContent='↑ Import dialogue audio';$('audioFile').value='';
+      }
     };
     pollStatus=async function(){
       state.hardware=false;state.busy=false;
