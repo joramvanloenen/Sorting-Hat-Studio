@@ -402,8 +402,18 @@ async function uploadAudio(file){
  }catch(e){toast('Audio import failed: '+e.message)}finally{$('uploadBtn').disabled=false;$('uploadBtn').textContent='↑ Import dialogue audio';$('audioFile').value=''}
 }
 function wireControls(){
+ // Import events must work even if optional Pi controls are absent.
+ $('uploadBtn').onclick=()=>$('audioFile').click();
+ $('audioFile').addEventListener('change',e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  Promise.resolve().then(()=>uploadAudio(file)).catch(err=>{
+   console.error('Sorting Hat audio import handler failed',err);
+   window.setImportStatus?.('error','Could not start audio import: '+(err?.message||err));
+   toast('Could not start audio import: '+(err?.message||err));
+  });
+ });
  $('saveBtn').onclick=saveClip;$('ceremonyBtn').onclick=async()=>{try{const res=await api('/api/ceremony','POST',{});toast(res.started?'Sorting ceremony started on Pi.':'Pi is already performing.')}catch(e){toast(e.message)}};
- $('playOnPiBtn').onclick=async()=>{await saveClip();try{const res=await api('/api/play/'+state.clip.id,'POST',{});toast(res.started?'Playing this clip on Pi.':'Pi is already performing.')}catch(e){toast(e.message)}};
+ if($('playOnPiBtn'))$('playOnPiBtn').onclick=async()=>{await saveClip();try{const res=await api('/api/play/'+state.clip.id,'POST',{});toast(res.started?'Playing this clip on Pi.':'Pi is already performing.')}catch(e){toast(e.message)}};
  $('playBtn').onclick=togglePlayback;$('stopBtn').onclick=()=>{stopPlayback();api('/api/stop','POST',{}).catch(()=>{})};$('startBtn').onclick=()=>{stopPlayback();scrub(0)};
  $('previewVolume').oninput=e=>audio.volume=Number(e.target.value)/100;
  $('keyTime').onchange=e=>changeSelected('t',Number(e.target.value));$('keyValue').onchange=e=>changeSelected('v',Number(e.target.value)/100);$('keyEase').onchange=e=>changeSelected('ease',e.target.value);
@@ -411,7 +421,7 @@ function wireControls(){
  $('addKeyBtn').onclick=()=>{const channel=$('keyChannel').value;addKey(channel,state.time,values(state.time)[channel]);render()};
  $('deleteKeyBtn').onclick=()=>{if(!state.selected)return;state.clip.tracks[state.selected.channel].splice(state.selected.index,1);state.selected=null;markDirty();updateInspector();render()};
  $('jawIntensity').oninput=e=>$('intensityLabel').textContent=e.target.value+'%';$('jawThreshold').oninput=e=>$('thresholdLabel').textContent=e.target.value+'%';
- $('generateBtn').onclick=generateJaw;$('uploadBtn').onclick=()=>$('audioFile').click();$('audioFile').onchange=e=>uploadAudio(e.target.files[0]);
+ $('generateBtn').onclick=generateJaw;
  $('saveHardwareBtn').onclick=saveCalibration;
  $('zoom').oninput=e=>{state.zoom=Number(e.target.value);$('zoomLabel').textContent=state.zoom+' px/s';render()};
  $('resetZoomBtn').onclick=()=>{state.zoom=Math.round(clamp(($('timelineScroll').clientWidth-70)/state.clip.duration,65,260));$('zoom').value=state.zoom;$('zoomLabel').textContent=state.zoom+' px/s';render()};
@@ -448,13 +458,18 @@ async function pollStatus(){
  }catch{state.hardware=false;$('connectionDot').classList.remove('ready');$('connectionText').textContent='Pi connection lost'}
 }
 async function init(){
- wireControls();if(PAGES_MODE)setupPagesUI();
  try{
+  wireControls();if(PAGES_MODE)setupPagesUI();
   const [project,settings]=await Promise.all([api('/api/project'),api('/api/settings')]);
   state.project=project;state.settings=settings;
   let lastClip=null;if(PAGES_MODE){try{lastClip=localStorage.getItem('sorting-hat-last-clip')}catch(e){}}const first=project.clips.find(c=>c.id===lastClip)||project.clips[0];state.clip=null;
   buildCalibration();await selectClip(first.id);$('zoomLabel').textContent=state.zoom+' px/s';
   await pollStatus();setInterval(pollStatus,1200);requestAnimationFrame(animate);
- }catch(e){toast('Could not initialize editor: '+e.message);$('connectionText').textContent='Offline'}
+ }catch(e){
+  console.error('Sorting Hat editor initialization failed',e);
+  const msg='Editor setup failed: '+(e?.message||e);
+  window.setImportStatus?.('error',msg);
+  toast(msg);$('connectionText').textContent='Editor setup error';
+ }
 }
 init();
