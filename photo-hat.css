@@ -4,8 +4,9 @@
 .hat-photo-stage{
   position:relative;
   flex:none;
-  width:min(95%,423px);
-  max-height:100%;
+  height:min(100%,335px);
+  width:auto;
+  max-width:95%;
   aspect-ratio:423 / 335;
   filter:drop-shadow(0 12px 14px rgba(0,0,0,.46));
   isolation:isolate;
@@ -32,5 +33,5 @@
   z-index:2;transform-origin:51% 17%;will-change:transform;
 }
 @media(max-width:800px){
-  .hat-photo-stage{width:min(97%,390px);}
+   .hat-photo-stage{max-width:97%;}
 }
