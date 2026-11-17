@@ -7,6 +7,7 @@
   <title>Sorting Hat · Motion Studio</title>
   <link rel="stylesheet" href="./style.css" />
 <link rel="stylesheet" href="./import-monitor.css?v=20261116-4" />
+  <link rel="stylesheet" href="./photo-hat.css?v=photo-rig-20261117" />
 </head>
 <body>
 <header class="topbar">
@@ -37,28 +38,13 @@
         <div class="panel-head"><div><span class="eyebrow">CHARACTER PREVIEW</span><h1>Give the hat a personality<span class="gold">.</span></h1></div><div class="live-controls"><label class="toggle"><input type="checkbox" id="livePreview"/><span></span> Live servos (Pi only)</label></div></div>
         <div class="stage">
           <div class="stage-halo"></div>
-          <svg id="hat" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 430" role="img" aria-label="Animated stylized sorting hat preview">
-            <defs>
-              <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A08B71"/><stop offset=".48" stop-color="#65584E"/><stop offset="1" stop-color="#2C2A2B"/></linearGradient>
-              <linearGradient id="fold" x1="0" y1="0" x2="1" y2=".7"><stop stop-color="#B3A083"/><stop offset="1" stop-color="#51463B"/></linearGradient>
-              <linearGradient id="brim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9C8365"/><stop offset=".65" stop-color="#56483B"/><stop offset="1" stop-color="#28282A"/></linearGradient>
-              <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
-            </defs>
-            <ellipse cx="282" cy="386" rx="205" ry="20" fill="#07080A" opacity=".55" filter="url(#shadow)"/>
-            <path d="M150 331 C171 264 181 187 215 120 Q250 40 335 24 Q350 21 340 55 L329 122 Q338 157 365 176 Q391 219 395 336 C320 354 223 355 150 331Z" fill="url(#cloth)" stroke="#BD9D74" stroke-width="2"/>
-            <path d="M255 93 Q287 52 326 49 L316 109 Q288 126 254 152 Q231 131 255 93Z" fill="#51473C" opacity=".65"/>
-            <path d="M189 253 Q245 194 304 183 Q367 180 372 241 C329 234 257 245 199 307" fill="none" stroke="#2B2726" stroke-width="17" opacity=".38" stroke-linecap="round"/>
-            <path d="M183 317 Q188 254 215 225 Q243 251 268 276 Q328 265 361 241 Q382 273 379 328Z" fill="url(#fold)" opacity=".75"/>
-            <g id="browsShape"><path id="browLeft" d="M209 228 Q241 199 270 224 Q249 220 222 240Z" fill="#292624" stroke="#C1A17B" stroke-opacity=".28" stroke-width="2"/><path id="browRight" d="M292 221 Q322 195 351 223 L339 239 Q315 223 292 221Z" fill="#292624" stroke="#C1A17B" stroke-opacity=".28" stroke-width="2"/></g>
-            <path d="M232 250 Q249 237 265 246 Q249 259 232 250 M303 245 Q325 236 342 250 Q322 262 303 245" fill="#222222" opacity=".85"/>
-            <path d="M276 257 Q294 259 306 272 Q282 280 260 274" fill="#473D35" stroke="#312A29" stroke-width="2"/>
-            <g id="mouth"><path id="mouthDark" d="M224 300 Q279 291 347 298 Q307 309 278 309 Q246 309 224 300Z" fill="#1C171B"/><path id="lowerLip" d="M222 301 Q280 318 348 299 Q313 332 276 329 Q241 329 222 301Z" fill="#85715F" stroke="#2D292B" stroke-width="2"/></g>
-            <path d="M130 329 Q183 352 275 347 Q369 344 428 331 Q452 326 481 346 Q450 382 370 389 Q274 407 169 387 Q113 378 83 355 Q94 337 130 329Z" fill="url(#brim)" stroke="#BA9A6A" stroke-width="2"/>
-            <path d="M103 354 Q206 386 361 370 Q421 361 461 349" fill="none" stroke="#E0B985" stroke-opacity=".33" stroke-width="4"/>
-            <path d="M180 325 Q272 346 370 324" fill="none" stroke="#332D29" stroke-width="10" stroke-linecap="round" opacity=".55"/>
-          </svg>
+          <div class="hat-photo-stage" id="hatPhotoStage" role="img" aria-label="Sorting Hat photographic preview with moving brow and upper lip">
+            <img id="hatBase" class="hat-photo-base" src="./assets/hat-base.webp" alt="" draggable="false">
+            <img id="hatBrowLayer" class="hat-photo-brow" src="./assets/hat-brow.webp" alt="" draggable="false">
+            <img id="hatUpperLipLayer" class="hat-photo-upperlip" src="./assets/hat-upperlip.webp" alt="" draggable="false">
+          </div>
           <div class="stage-notes"><div class="readout"><span>JAW OPEN</span><strong id="jawReadout">0%</strong></div><div class="readout"><span>BROW LIFT</span><strong id="browReadout">50%</strong></div></div>
-          <div class="stage-corner">2D CHARACTER PREVIEW <span>·</span> 2 AXES</div>
+          <div class="stage-corner">PHOTO HAT PREVIEW <span>·</span> 2 AXES</div>
         </div>
         <div class="transport"><button class="icon-button" id="startBtn" title="Jump to start">↤</button><button class="play-button" id="playBtn" title="Browser preview">▶</button><button class="icon-button" id="stopBtn" title="Stop preview">■</button><span id="currentTime">00:00.00</span><span class="time-sep">/</span><span id="totalTime">00:04.00</span><div class="transport-spacer"></div><label class="volume-control">Preview volume <input id="previewVolume" type="range" min="0" max="100" value="75" /></label><button class="ghost small" id="downloadAudioBtn">↓ Download audio</button></div>
       </div>
@@ -106,7 +92,7 @@
 <audio id="audio" preload="auto"></audio>
 <div id="toast" class="toast" role="status"></div>
 <script src="./import-monitor.js?v=20261116-4"></script>
-<script src="./app.js?v=fix-audio-bootstrap-20261117"></script>
+<script src="./app.js?v=photo-rig-20261117"></script>
 <script src="./auto-motion.js?v=fix-audio-bootstrap-20261117"></script>
 </body>
 </html>

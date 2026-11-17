@@ -247,13 +247,19 @@ function render(){
 function updateFace(){
  if(!state.clip)return;
  const {jaw,brow}=values(state.time);
- // Mouth opens vertically from the upper lip while the lower crease moves down.
- const gap=5+jaw*46;
- $('mouthDark').setAttribute('d',`M222 300 Q282 ${294-jaw*2} 349 299 Q318 ${302+gap*.55} 281 ${302+gap} Q244 ${302+gap*.8} 222 300Z`);
- $('lowerLip').setAttribute('d',`M222 302 Q281 ${306+gap} 349 301 Q315 ${323+gap} 278 ${320+gap} Q240 ${320+gap*.75} 222 302Z`);
- const shift=(.5-brow)*25;
- $('browsShape').setAttribute('transform',`translate(0 ${shift.toFixed(2)}) rotate(${((brow-.5)*-4).toFixed(2)} 280 225)`);
- $('jawReadout').textContent=Math.round(jaw*100)+'%';$('browReadout').textContent=Math.round(brow*100)+'%';
+ // Keep the Pi's two servo channels and the browser visualization in step.
+ const browLayer=$('hatBrowLayer'),lipLayer=$('hatUpperLipLayer');
+ if(browLayer){
+  const lift=clamp(brow,0,1)-0.5;
+  browLayer.style.transform=`translate3d(0,${(-32*lift).toFixed(2)}%,0) rotate(${(-6*lift).toFixed(2)}deg)`;
+ }
+ if(lipLayer){
+  const open=clamp(jaw,0,1);
+  // Pull the upper lip away from the dark mouth cavity in the supplied base.
+  lipLayer.style.transform=`translate3d(0,${(-28*open).toFixed(2)}%,0) rotate(${(-2.6*open).toFixed(2)}deg) scaleY(${(1-0.06*open).toFixed(3)})`;
+ }
+ $('jawReadout').textContent=Math.round(jaw*100)+'%';
+ $('browReadout').textContent=Math.round(brow*100)+'%';
  $('currentTime').textContent=fmt(state.time);
  const now=performance.now();
  if($('livePreview').checked&&state.hardware&&!state.busy&&now-state.prevPreviewAt>60){
