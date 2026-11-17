@@ -82,7 +82,7 @@
       </aside>
     </section>
     <section class="timeline-panel">
-      <div class="timeline-header"><div><span class="eyebrow">PERFORMANCE TIMELINE</span><div class="timeline-meta" id="trackStats">Jaw + brows · Keyframe animation</div></div><div class="timeline-actions"><span class="eyebrow">ZOOM</span><input type="range" id="zoom" min="65" max="260" value="128"/><span class="zoom-label" id="zoomLabel">128 px/s</span><button class="ghost small" id="resetZoomBtn">Fit</button></div></div>
+      <div class="timeline-header"><div><span class="eyebrow">PERFORMANCE TIMELINE</span><div class="timeline-meta" id="trackStats">Jaw + brows · Keyframe animation</div></div><div class="timeline-actions"><label class="scrub-audio-control" title="Hear short audio snippets while dragging the timeline playhead"><input type="checkbox" id="scrubAudioEnabled" checked/><span>Audio scrub</span></label><span class="eyebrow">ZOOM</span><input type="range" id="zoom" min="65" max="260" value="128"/><span class="zoom-label" id="zoomLabel">128 px/s</span><button class="ghost small" id="resetZoomBtn">Fit</button></div></div>
       <div class="lane-labels"><span>AUDIO WAVEFORM</span><span class="label-jaw">● JAW <small>OPEN / CLOSE</small></span><span class="label-brow">● EYEBROWS <small>LOW / RAISED</small></span></div>
       <div id="timelineScroll" class="timeline-scroll"><canvas id="timeline" height="308"></canvas></div>
       <div class="timeline-footer"><span>Double-click to add • Drag to reposition • Delete to remove</span><span id="saveState">No unsaved changes</span></div>
@@ -92,7 +92,7 @@
 <audio id="audio" preload="auto"></audio>
 <div id="toast" class="toast" role="status"></div>
 <script src="./import-monitor.js?v=20261116-4"></script>
-<script src="./app.js?v=photo-rig-20261117"></script>
+<script src="./app.js?v=audio-scrub-20261117"></script>
 <script src="./auto-motion.js?v=fix-audio-bootstrap-20261117"></script>
 </body>
 </html>

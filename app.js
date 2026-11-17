@@ -168,6 +168,7 @@ function makeClipList(){
 async function selectClip(id){
  if(state.clip?.id===id)return;
  stopPlayback();if(state.dirty)await saveClip();
+ releaseScrubGrain();
  state.clip=getClip(id);state.selected=null;state.time=0;state.peaks=null;state.audioBuffer=null;
  if(PAGES_MODE){try{localStorage.setItem('sorting-hat-last-clip',id)}catch(e){}}
  makeClipList();$('clipTitle').textContent=state.clip.title;
@@ -310,9 +311,58 @@ function keyFromPosition(x,y){
  const keys=state.clip.tracks[lane.channel];let best=null,d=12;
  keys.forEach((k,i)=>{const px=k.t*state.zoom,py=lane.bottom-12-k.v*(lane.bottom-lane.top-24);const dist=Math.hypot(x-px,y-py);if(dist<d){best={channel:lane.channel,index:i};d=dist}});return best;
 }
-function scrub(x){state.time=clamp(x/state.zoom,0,state.clip.duration);if(state.clip.audio){try{audio.currentTime=state.time}catch{}}state.fromTime=state.time;state.startAt=performance.now();updateFace();render()}
+// Web Audio grains make paused MP3/WAV scrubbing audible without starting normal playback.
+// Each grain is softly faded to avoid clicks when dragging the playhead quickly.
+let activeScrubGrain=null, lastScrubGrainAt=-Infinity, lastScrubSampleTime=-Infinity;
+function releaseScrubGrain(){
+ if(!activeScrubGrain||!audioContext)return;
+ const {source,gain}=activeScrubGrain;activeScrubGrain=null;
+ const now=audioContext.currentTime;
+ try{
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(Math.max(0,gain.gain.value),now);
+  gain.gain.linearRampToValueAtTime(0,now+.015);
+  source.stop(now+.019);
+ }catch(e){/* grain already ended */}
+}
+function auditionScrub(t){
+ if(!$('scrubAudioEnabled')?.checked||!state.audioBuffer||!audioContext)return;
+ const context=audioContext,buffer=state.audioBuffer;
+ if(!Number.isFinite(t)||!(buffer.duration>0))return;
+ // Resume inside pointer gesture: autoplay policies otherwise block WebAudio.
+ if(context.state==='suspended')context.resume().catch(()=>{});
+ const nowMS=performance.now();
+ // Limit grain creation; never create new sounds for imperceptible seeks.
+ if(nowMS-lastScrubGrainAt<56||(Math.abs(t-lastScrubSampleTime)<.012&&nowMS-lastScrubGrainAt<180))return;
+ lastScrubGrainAt=nowMS;lastScrubSampleTime=t;
+ releaseScrubGrain();
+ const offset=clamp(t-.018,0,Math.max(0,buffer.duration-.02));
+ const duration=Math.min(.115,buffer.duration-offset);
+ if(duration<.016)return;
+ const source=context.createBufferSource(),gain=context.createGain();
+ const volume=clamp(Number($('previewVolume').value)/100,0,1)*.78;
+ source.buffer=buffer;source.connect(gain);gain.connect(context.destination);
+ const start=context.currentTime+.004;
+ gain.gain.setValueAtTime(0,start);
+ gain.gain.linearRampToValueAtTime(volume,start+Math.min(.009,duration*.25));
+ gain.gain.setValueAtTime(volume,start+Math.max(.009,duration-.025));
+ gain.gain.linearRampToValueAtTime(0,start+duration);
+ source.start(start,offset,duration);
+ source.stop(start+duration+.004);
+ activeScrubGrain={source,gain};
+ source.onended=()=>{if(activeScrubGrain?.source===source)activeScrubGrain=null;try{source.disconnect();gain.disconnect()}catch(e){}};
+}
+
+function scrub(x,withAudio=false){
+ state.time=clamp(x/state.zoom,0,state.clip.duration);
+ if(state.clip.audio){try{audio.currentTime=state.time}catch(e){}}
+ state.fromTime=state.time;state.startAt=performance.now();
+ if(withAudio)auditionScrub(state.time);
+ updateFace();render();
+}
 function stopPlayback(){state.playing=false;audio.pause();$('playBtn').textContent='▶'}
 async function togglePlayback(){
+ releaseScrubGrain();
  if(state.playing){stopPlayback();return}
  if(state.time>=state.clip.duration-.02)state.time=0;
  state.fromTime=state.time;state.startAt=performance.now();state.playing=true;$('playBtn').textContent='Ⅱ';
@@ -329,13 +379,13 @@ canvas.addEventListener('pointerdown',e=>{
  if(!state.clip)return;
  const p=pointerPos(e);stopPlayback();const found=keyFromPosition(p.x,p.y);
  if(found){selectKey(found.channel,found.index);state.drag={mode:'key',ref:selectedKey(),channel:found.channel};}
- else{scrub(p.x);state.drag={mode:'scrub'}};
+ else{scrub(p.x,true);state.drag={mode:'scrub'}};
  canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove',e=>{
  if(!state.drag||!state.clip)return;
  const p=pointerPos(e);
- if(state.drag.mode==='scrub'){scrub(p.x);return}
+ if(state.drag.mode==='scrub'){scrub(p.x,true);return}
  const lane=laneAt(p.y)||{top:state.drag.channel==='jaw'?110:210,bottom:state.drag.channel==='jaw'?196:296};
  const v=clamp((lane.bottom-12-p.y)/(lane.bottom-lane.top-24));
  const key=state.drag.ref;key.t=clamp(p.x/state.zoom,0,state.clip.duration);key.v=v;
@@ -343,7 +393,10 @@ canvas.addEventListener('pointermove',e=>{
  state.selected={channel:state.drag.channel,index:points.indexOf(key)};
  markDirty();updateInspector();render();
 });
-canvas.addEventListener('pointerup',()=>{state.drag=null});canvas.addEventListener('pointercancel',()=>{state.drag=null});
+function endTimelineDrag(){state.drag=null;releaseScrubGrain()}
+canvas.addEventListener('pointerup',endTimelineDrag);
+canvas.addEventListener('pointercancel',endTimelineDrag);
+canvas.addEventListener('lostpointercapture',endTimelineDrag);
 canvas.addEventListener('dblclick',e=>{
  const p=pointerPos(e),lane=laneAt(p.y);if(!lane)return;
  const t=clamp(p.x/state.zoom,0,state.clip.duration),v=clamp((lane.bottom-12-p.y)/(lane.bottom-lane.top-24));addKey(lane.channel,t,v);render();

@@ -17,3 +17,10 @@
 .stage.dragging-audio:after{content:'DROP AUDIO TO ANIMATE';position:absolute;inset:10px;z-index:10;display:grid;place-items:center;background:#151517df;color:#f4d6a1;border-radius:12px;font-size:18px;font-weight:800;letter-spacing:.16em;pointer-events:none}
 #motionStyle{min-width:0}
 @media(max-width:800px){.top-actions .quick-upload{display:inline-flex!important;padding:8px;font-size:10px}.top-actions #saveBtn{display:none}}
+
+/* Audio timeline audition: a small control next to zoom. */
+.scrub-audio-control{display:inline-flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #665139;border-radius:7px;background:#2c2720;color:#e8cc9f;font-size:11px;font-weight:650;white-space:nowrap;cursor:pointer;user-select:none}
+.scrub-audio-control input{accent-color:#d6ab6d;cursor:pointer;margin:0}
+.scrub-audio-control:focus-within{outline:2px solid #d6ab6d;outline-offset:2px}
+@media(max-width:1050px){.timeline-header{flex-wrap:wrap}.timeline-actions{flex-wrap:wrap;justify-content:flex-end;gap:7px}}
+@media(max-width:800px){.timeline-actions{justify-content:flex-start}.scrub-audio-control{padding:8px 11px}}
