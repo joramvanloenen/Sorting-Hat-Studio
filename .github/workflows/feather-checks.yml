@@ -11,6 +11,9 @@ on:
       - 'index.html'
       - 'tests/audio_converter.test.cjs'
       - 'tests/feather_export.test.cjs'
+      - 'voice-character.js'
+      - 'voice-tools.js'
+      - 'tests/voice_character.test.cjs'
       - 'tests/test_feather_player.py'
       - '.github/workflows/feather-checks.yml'
   workflow_dispatch:
@@ -40,6 +43,8 @@ jobs:
       - name: Validate browser audio code
         run: |
           node --check audio-converter.js
+          node --check voice-character.js
+          node --check voice-tools.js
           node --check audio-tools.js
           node --check feather-export.js
           node --check auto-motion.js
@@ -48,3 +53,4 @@ jobs:
         run: |
           node tests/audio_converter.test.cjs
           node tests/feather_export.test.cjs
+          node tests/voice_character.test.cjs

@@ -17,3 +17,30 @@
 .stage.dragging-audio:after{content:'DROP AUDIO TO ANIMATE';position:absolute;inset:10px;z-index:10;display:grid;place-items:center;background:#151517df;color:#f4d6a1;border-radius:12px;font-size:18px;font-weight:800;letter-spacing:.16em;pointer-events:none}
 #motionStyle{min-width:0}
 @media(max-width:800px){.top-actions .quick-upload{display:inline-flex!important;padding:8px;font-size:10px}.top-actions #saveBtn{display:none}}
+
+/* Audio and performance controls remain compact and accessible in the narrow sidebar. */
+.clip-entry{display:flex;align-items:stretch;border-radius:9px;min-width:0}
+.clip-entry .clip{flex:1;min-width:0;width:auto;padding-right:3px}
+.clip-entry .clip-summary{min-width:0;overflow:hidden}
+.clip-entry .clip-title,.clip-entry .clip-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clip-actions{display:flex;align-items:center;gap:3px;padding-right:4px}
+.clip-actions button{border:1px solid transparent;background:transparent;color:#9d9290;border-radius:6px;cursor:pointer;padding:6px 4px;min-width:24px;font-size:14px;line-height:1;flex:0 0 auto}
+.clip-actions button:hover{border-color:#5b514a;background:#372d2b;color:#ffb6aa}
+.clip-actions .clip-remove-audio{font-size:12px;color:#c7ad83}
+.clip-actions button:disabled{opacity:.23;cursor:default}
+.clip-actions button:disabled:hover{background:transparent;border-color:transparent}
+.clip-actions-hint{font-size:9px;line-height:1.5;color:#827c80;margin:7px 6px 12px}
+@media(max-width:800px){
+ .clip-entry{flex:0 0 auto;min-width:160px}
+ .clip-entry .clip{min-width:90px;padding:7px}
+ .clip-actions{padding-right:3px}
+ .clip-actions-hint{display:block;font-size:10px}
+}
+
+/* Voice Character: same understated layout as audio converter. */
+.voice-character-panel{border:1px solid #4c4034;border-radius:10px;background:#25211e;padding:12px;margin:12px 0 10px;display:flex;flex-direction:column;gap:8px}
+.voice-character-panel .field{margin:3px 0;font-size:11px}
+.voice-character-panel .field select{width:100%}
+.voice-character-panel .field input[type=range]{width:100%;accent-color:#c79a63}
+.voice-character-panel #voiceBassValue{color:#f0c18e;font-weight:650;float:right}
+.voice-character-panel .audio-converter-info{color:#c4ad90}
