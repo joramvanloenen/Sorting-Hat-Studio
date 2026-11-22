@@ -54,11 +54,16 @@ def clip_template(clip_id: str, title: str, duration: float = 4.0) -> dict:
 
 
 def initial_project() -> dict:
+    """An empty performance workspace, with no preloaded dialogue."""
     return {
-        "version": 1,
-        "clips": [
-            clip_template("intro", "Sample dialogue", 4),
-        ],
+        "version": 2,
+        "clips": [{
+            "id": "performance_1", "title": "New Performance", "duration": 4.0, "audio": None,
+            "tracks": {
+                "jaw": [{"t": 0, "v": 0, "ease": "smooth"}, {"t": 4, "v": 0, "ease": "smooth"}],
+                "brow": [{"t": 0, "v": 0.5, "ease": "smooth"}, {"t": 4, "v": 0.5, "ease": "smooth"}]
+            }
+        }]
     }
 
 
@@ -67,7 +72,7 @@ def initial_settings() -> dict:
         "jaw": {"gpio": 17, "min_us": 1200, "max_us": 1750, "invert": False, "rest": 0.0},
         "brow": {"gpio": 27, "min_us": 1200, "max_us": 1750, "invert": False, "rest": 0.5},
         "button_gpio": 22,
-        "trigger_clip": "intro",
+        "trigger_clip": "performance_1",
         "audio_latency_ms": 65,
         "audio_device": "default",
         "idle_motion": True,
@@ -135,7 +140,7 @@ def validate_settings(settings: dict) -> dict:
     if cleaned["jaw"]["gpio"] == cleaned["brow"]["gpio"]:
         raise ValueError("Jaw and brow cannot use the same GPIO")
     cleaned["button_gpio"] = 22
-    trigger = str(settings.get("trigger_clip", "intro"))
+    trigger = str(settings.get("trigger_clip", "performance_1"))
     if not trigger or len(trigger) > 64 or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for c in trigger):
         raise ValueError("Invalid trigger clip ID")
     cleaned["trigger_clip"] = trigger
@@ -338,7 +343,7 @@ class HatEngine:
     def play_trigger_clip(self):
         """Pressing GPIO22 starts the one selected clip, never a sequence."""
         with self.lock:
-            clip_id = self.settings.get("trigger_clip", "intro")
+            clip_id = self.settings.get("trigger_clip", "performance_1")
             available = {c["id"] for c in self.project["clips"]}
             if clip_id not in available:
                 clip_id = self.project["clips"][0]["id"] if self.project["clips"] else None

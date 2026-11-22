@@ -68,8 +68,8 @@ class EngineTests(unittest.TestCase):
         self.assertTrue((self.dir/'project.json').exists())
 
     def test_single_clip_playback(self):
-        self.assertTrue(self.engine.start_clip('intro'))
-        self.assertFalse(self.engine.start_clip('intro'))
+        self.assertTrue(self.engine.start_clip('performance_1'))
+        self.assertFalse(self.engine.start_clip('performance_1'))
         self.engine.stop()
         deadline=time.monotonic()+2
         while self.engine.status()['busy'] and time.monotonic()<deadline:time.sleep(.02)

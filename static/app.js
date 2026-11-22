@@ -25,6 +25,7 @@ function values(t){return {jaw:evalKeys(state.clip.tracks.jaw,t,0),brow:evalKeys
 function makeClipList(){
  const icons=['◈','≋','♜','◉','◇','✧'];
  $('clipList').innerHTML='';
+ if($('clipCount'))$('clipCount').textContent=String(state.project.clips.length).padStart(2,'0')+' CLIP'+(state.project.clips.length===1?'':'S');
  state.project.clips.forEach((clip,i)=>{
   const button=document.createElement('button');button.className='clip'+(clip.id===state.clip?.id?' active':'');
   button.innerHTML=`<span class="clip-icon">${icons[i]||'✦'}</span><div><div class="clip-title"></div><div class="clip-meta"></div></div>`;
