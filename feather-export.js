@@ -129,6 +129,11 @@
     requestText('./feather-rp2040/config.json')
    ]);
    const cfg = JSON.parse(settingsText);
+   // The on-board trigger should play the performance selected in the editor,
+   // not a removed factory demo or the empty starter clip.
+   const selected=state.project?.clips?.find(c=>c.id===state.clip?.id);
+   const preferred=selected || state.project?.clips?.find(c=>c.audio) || state.project?.clips?.[0];
+   if(preferred)cfg.clip_id=preferred.id;
    // Safe pulse settings from the browser's calibration panel.
    for (const ch of ['jaw', 'brow']) {
     const setting = state.settings && state.settings[ch];

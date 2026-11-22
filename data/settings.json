@@ -17,5 +17,5 @@
   "audio_latency_ms": 65,
   "audio_device": "default",
   "idle_motion": true,
-  "trigger_clip": "intro"
+  "trigger_clip": "performance_1"
 }
