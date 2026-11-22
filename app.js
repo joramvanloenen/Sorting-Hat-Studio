@@ -91,20 +91,7 @@ async function pagesUploadAudio(file){
  }catch(e){toast('Import failed: '+e.message)}
  finally{$('uploadBtn').disabled=false;$('uploadBtn').textContent='↑ Import dialogue audio';$('audioFile').value=''}
 }
-async function previewCeremony(){
- const ids=['intro','ponder','house_'+['gryffindor','slytherin','ravenclaw','hufflepuff'][Math.floor(Math.random()*4)]];
- for(const id of ids){
-  if(state.dirty)await saveClip();
-  if(state.clip?.id!==id)await selectClip(id);
-  state.time=0;await togglePlayback();
-  await new Promise(resolve=>{
-   const check=setInterval(()=>{if(!state.playing){clearInterval(check);resolve()}},60);
-  });
-  await new Promise(resolve=>setTimeout(resolve,400));
- }
-}
 function setupPagesUI(){
- $('ceremonyBtn').onclick=()=>previewCeremony().catch(e=>toast(e.message));
  $('livePreview').disabled=true;$('livePreview').checked=false;
  $('exportProjectBtn').onclick=async()=>{
   if(state.dirty)await saveClip();
@@ -471,7 +458,7 @@ function wireControls(){
    toast('Could not start audio import: '+(err?.message||err));
   });
  });
- $('saveBtn').onclick=saveClip;$('ceremonyBtn').onclick=async()=>{try{const res=await api('/api/ceremony','POST',{});toast(res.started?'Sorting ceremony started on Pi.':'Pi is already performing.')}catch(e){toast(e.message)}};
+ $('saveBtn').onclick=saveClip;
  if($('playOnPiBtn'))$('playOnPiBtn').onclick=async()=>{await saveClip();try{const res=await api('/api/play/'+state.clip.id,'POST',{});toast(res.started?'Playing this clip on Pi.':'Pi is already performing.')}catch(e){toast(e.message)}};
  $('playBtn').onclick=togglePlayback;$('stopBtn').onclick=()=>{stopPlayback();api('/api/stop','POST',{}).catch(()=>{})};$('startBtn').onclick=()=>{stopPlayback();scrub(0)};
  $('previewVolume').oninput=e=>audio.volume=Number(e.target.value)/100;

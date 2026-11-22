@@ -267,7 +267,7 @@ async function uploadAudio(file){
  }catch(e){toast('Audio import failed: '+e.message)}finally{$('uploadBtn').disabled=false;$('uploadBtn').textContent='↑ Import dialogue audio';$('audioFile').value=''}
 }
 function wireControls(){
- $('saveBtn').onclick=saveClip;$('ceremonyBtn').onclick=async()=>{try{const res=await api('/api/ceremony','POST',{});toast(res.started?'Sorting ceremony started on Pi.':'Pi is already performing.')}catch(e){toast(e.message)}};
+ $('saveBtn').onclick=saveClip;
  $('playOnPiBtn').onclick=async()=>{await saveClip();try{const res=await api('/api/play/'+state.clip.id,'POST',{});toast(res.started?'Playing this clip on Pi.':'Pi is already performing.')}catch(e){toast(e.message)}};
  $('playBtn').onclick=togglePlayback;$('stopBtn').onclick=()=>{stopPlayback();api('/api/stop','POST',{}).catch(()=>{})};$('startBtn').onclick=()=>{stopPlayback();scrub(0)};
  $('previewVolume').oninput=e=>audio.volume=Number(e.target.value)/100;
