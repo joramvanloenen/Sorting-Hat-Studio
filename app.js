@@ -3,7 +3,15 @@
 const $ = id => document.getElementById(id);
 
 const PAGES_MODE = document.documentElement.dataset.pages === '1';
-const STORAGE_PROJECT = 'sorting-hat-pages-project-v1';
+const STORAGE_PROJECT = 'sorting-hat-pages-project-v2';
+const LEGACY_PROJECT_KEY = 'sorting-hat-pages-project-v1';
+const LEGACY_BACKUP_KEY = 'sorting-hat-legacy-project-backup-v1';
+const LEGACY_PRESET_IDS = new Set(["intro","ponder","house_gryffindor","house_slytherin","house_ravenclaw","house_hufflepuff"]);
+function migrateOldLibrary(old, starter) {
+ const custom=(Array.isArray(old?.clips)?old.clips:[])
+  .filter(c=>c&&!LEGACY_PRESET_IDS.has(c.id)&&c.tracks?.jaw&&c.tracks?.brow);
+ return {version:2,clips:custom.length?custom:structuredClone(starter.clips)};
+}
 const STORAGE_SETTINGS = 'sorting-hat-pages-settings-v1';
 let pagesProject = null, pagesSettings = null;
 
@@ -33,8 +41,21 @@ function downloadFile(name, blob){
 }
 async function pagesApi(path,method,data){
  if(path==='/api/project'){
-  if(!pagesProject){const sample=await (await fetch('./project.json')).json();
-   try{pagesProject=JSON.parse(localStorage.getItem(STORAGE_PROJECT))||sample}catch{pagesProject=sample}
+  if(!pagesProject){
+   const sample=await (await fetch('./project.json?v=blank-library-20261122',{cache:'no-store'})).json();
+   try{
+    const existing=JSON.parse(localStorage.getItem(STORAGE_PROJECT));
+    if(Array.isArray(existing?.clips)&&existing.clips.length)pagesProject=existing;
+    else{
+     const old=JSON.parse(localStorage.getItem(LEGACY_PROJECT_KEY));
+     if(Array.isArray(old?.clips)){
+      if(!localStorage.getItem(LEGACY_BACKUP_KEY))
+       localStorage.setItem(LEGACY_BACKUP_KEY,JSON.stringify(old));
+      pagesProject=migrateOldLibrary(old,sample);
+     }else pagesProject=sample;
+     localStorage.setItem(STORAGE_PROJECT,JSON.stringify(pagesProject));
+    }
+   }catch(e){console.warn('Could not migrate stored recordings:',e);pagesProject=sample}
   }return pagesProject;
  }
  if(path==='/api/settings'){
@@ -144,6 +165,7 @@ function values(t){return {jaw:evalKeys(state.clip.tracks.jaw,t,0),brow:evalKeys
 function makeClipList(){
  const icons=['◈','≋','♜','◉','◇','✧'];
  $('clipList').innerHTML='';
+ if($('clipCount'))$('clipCount').textContent=String(state.project.clips.length).padStart(2,'0')+' CLIP'+(state.project.clips.length===1?'':'S');
  state.project.clips.forEach((clip,i)=>{
   const button=document.createElement('button');button.className='clip'+(clip.id===state.clip?.id?' active':'');
   button.innerHTML=`<span class="clip-icon">${icons[i]||'✦'}</span><div><div class="clip-title"></div><div class="clip-meta"></div></div>`;
