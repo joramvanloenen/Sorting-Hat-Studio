@@ -295,6 +295,38 @@ class HatEngine:
             atomic_json(PROJECT_FILE, self.project)
             return deepcopy(validated)
 
+    def remove_audio(self, clip_id):
+        """Remove one WAV file without changing this performance's motion tracks."""
+        with self.lock:
+            if self.busy:
+                raise ValueError("Stop playback before removing audio")
+            clip = next((c for c in self.project["clips"] if c["id"] == clip_id), None)
+            if clip is None:
+                raise ValueError("Unknown performance")
+            if not clip.get("audio"):
+                raise ValueError("This performance has no audio")
+            filename = clip["audio"]
+            clip["audio"] = None
+            atomic_json(PROJECT_FILE, self.project)
+            (AUDIO / filename).unlink(missing_ok=True)
+            return deepcopy(clip)
+
+    def delete_clip(self, clip_id):
+        """Delete one performance and its recording, keeping a blank workspace."""
+        with self.lock:
+            if self.busy:
+                raise ValueError("Stop playback before deleting a performance")
+            i = next((i for i,c in enumerate(self.project["clips"]) if c["id"] == clip_id), None)
+            if i is None:
+                raise ValueError("Unknown performance")
+            clip = self.project["clips"].pop(i)
+            if not self.project["clips"]:
+                self.project["clips"] = initial_project()["clips"]
+            atomic_json(PROJECT_FILE, self.project)
+            if clip.get("audio"):
+                (AUDIO / clip["audio"]).unlink(missing_ok=True)
+            return {"deleted": True, "clips": deepcopy(self.project["clips"])}
+
     def save_settings(self, body):
         validated = validate_settings(body)
         with self.lock:

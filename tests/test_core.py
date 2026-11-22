@@ -75,6 +75,28 @@ class EngineTests(unittest.TestCase):
         while self.engine.status()['busy'] and time.monotonic()<deadline:time.sleep(.02)
         self.assertFalse(self.engine.status()['busy'])
 
+    def test_remove_audio_preserves_motion_and_deletes_wav(self):
+        from copy import deepcopy
+        clip = deepcopy(self.engine.get_project()['clips'][0])
+        clip['tracks']['jaw']=[{'t':0.3,'v':0.4,'ease':'smooth'}]
+        self.engine.save_clip(clip['id'],clip)
+        audio_path=self.dir/'audio'/(clip['id']+'.wav')
+        audio_path.parent.mkdir(parents=True,exist_ok=True)
+        audio_path.write_bytes(b'test wav')
+        self.engine.project['clips'][0]['audio']=clip['id']+'.wav'
+        removed=self.engine.remove_audio(clip['id'])
+        self.assertIsNone(removed['audio'])
+        self.assertEqual(removed['tracks']['jaw'],clip['tracks']['jaw'])
+        self.assertFalse(audio_path.exists())
+        persisted=json.loads((self.dir/'project.json').read_text())
+        self.assertIsNone(persisted['clips'][0]['audio'])
+
+    def test_delete_performance_resets_to_blank(self):
+        self.assertEqual(self.engine.delete_clip('performance_1')['clips'][0]['title'],'New Performance')
+        self.assertEqual(len(self.engine.get_project()['clips']),1)
+        with self.assertRaises(ValueError):
+            self.engine.delete_clip('nonexistent')
+
     def test_manual_preview(self):
         self.assertTrue(self.engine.preview(.3,.6))
         time.sleep(.075)

@@ -98,6 +98,20 @@ class HatHandler(BaseHTTPRequestHandler):
             raise ValueError("Expected application/json")
         return json.loads(self._body())
 
+    def do_DELETE(self):
+        path = self.url_path()
+        try:
+            if path.startswith("/api/audio/"):
+                return self.respond(self.engine.remove_audio(path.rsplit("/", 1)[-1]))
+            if path.startswith("/api/clip/"):
+                return self.respond(self.engine.delete_clip(path.rsplit("/", 1)[-1]))
+            return self.fail("Not found", 404)
+        except ValueError as exc:
+            return self.fail(exc, 400)
+        except Exception as exc:
+            traceback.print_exc()
+            return self.fail(exc, 500)
+
     def do_POST(self):
         path = self.url_path()
         try:
