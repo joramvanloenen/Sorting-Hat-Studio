@@ -76,25 +76,47 @@ async function pagesApi(path,method,data){
  if(path==='/api/preview')return {accepted:false};
  throw Error('Connect to the Raspberry Pi for hardware playback. This is a browser-only preview.');
 }
+let currentSavedAudioURL=null;
 async function pagesLoadAudio(){
  const token=++state.loadToken;
  audio.pause();audio.removeAttribute('src');audio.load();
- if(!state.clip?.audio)return;
+ if(currentSavedAudioURL){URL.revokeObjectURL(currentSavedAudioURL);currentSavedAudioURL=null}
+ if(!state.clip?.audio){
+  state.audioBuffer=null;state.peaks=null;window.updateAudioInfo?.(null,null);return;
+ }
  const clipid=state.clip.id;
- const stored=await storedAudio(clipid);
- const url=stored?URL.createObjectURL(stored):`./audio/${encodeURIComponent(clipid)}.mp3`;
- audio.src=url;audio.load();
  try{
-  const res=await fetch(url);if(!res.ok)throw Error('Audio not available');const bytes=await res.arrayBuffer();
+  const stored=await storedAudio(clipid);
+  if(token!==state.loadToken)return;
+  if(!stored&&clipid.startsWith('import_'))throw Error('Imported audio missing from this browser. Re-import the recording.');
+  let bytes;
+  if(stored){
+   currentSavedAudioURL=URL.createObjectURL(stored);
+   audio.src=currentSavedAudioURL;
+   bytes=await stored.arrayBuffer();
+  }else{
+   const url='./audio/'+encodeURIComponent(clipid)+'.mp3';
+   const res=await fetch(url);
+   if(!res.ok)throw Error('Source audio is missing ('+res.status+')');
+   bytes=await res.arrayBuffer();
+   audio.src=url;
+  }
+  audio.load();
   audioContext||=new (window.AudioContext||window.webkitAudioContext)();
   const decoded=await audioContext.decodeAudioData(bytes.slice(0));
   if(token!==state.loadToken)return;
   state.audioBuffer=decoded;state.peaks=calculatePeaks(decoded);render();
-  if(stored&&clipid.startsWith('import_')&&window.setImportStatus)window.setImportStatus('ready',state.clip.title+' · '+decoded.duration.toFixed(1)+'s · Audio and motion restored.');
- }catch(e){if(token===state.loadToken){
-   if(clipid.startsWith('import_')&&window.setImportStatus)window.setImportStatus('error','Could not reload '+state.clip.title+': '+e.message+'. Re-import the MP3.');
-   toast('Waveform unavailable: '+e.message);
- }}
+  window.updateAudioInfo?.(stored,decoded);
+  if(stored&&clipid.startsWith('import_')&&window.setImportStatus)
+   window.setImportStatus('ready',state.clip.title+' · '+decoded.duration.toFixed(1)+'s · Audio restored and ready.');
+ }catch(e){
+  if(token===state.loadToken){
+   state.audioBuffer=null;state.peaks=null;
+   window.updateAudioInfo?.(null,null,e.message);
+   window.setImportStatus?.('error','Audio unavailable for '+state.clip.title+': '+e.message);
+   toast('Audio unavailable: '+e.message);
+  }
+ }
 }
 async function pagesUploadAudio(file){
  if(!file)return;
@@ -180,7 +202,7 @@ async function selectClip(id){
  releaseScrubGrain();
  state.clip=getClip(id);state.selected=null;state.time=0;state.peaks=null;state.audioBuffer=null;
  if(PAGES_MODE){try{localStorage.setItem('sorting-hat-last-clip',id)}catch(e){}}
- makeClipList();$('clipTitle').textContent=state.clip.title;
+ makeClipList();window.refreshAudioTools?.();$('clipTitle').textContent=state.clip.title;
  $('clipDescription').textContent=state.clip.audio?'Audio loaded · animation editable':'No recorded audio yet · motion preview available';
  $('totalTime').textContent=fmt(state.clip.duration);
  $('trackStats').textContent=`Jaw: ${state.clip.tracks.jaw.length} keys · Brows: ${state.clip.tracks.brow.length} keys`;

@@ -191,13 +191,15 @@
         try{decoded=await ctx.decodeAudioData((await file.arrayBuffer()).slice(0));}
         catch(e){throw Error('Browser could not decode '+file.name+'. Check that it plays normally as an MP3. '+(e.message||''));}
         if(!Number.isFinite(decoded.duration)||decoded.duration<=0||decoded.duration>600)throw Error('Audio needs to be between 0 and 600 seconds.');
-        importStatus('Decoded '+file.name+' · '+decoded.duration.toFixed(1)+'s. Preparing animation…','neutral','generating');
+        importStatus('Decoded '+file.name+' · '+decoded.duration.toFixed(1)+'s. Converting to 22.05 kHz PCM WAV…','neutral','generating');
+        if(!window.HatAudioConvert)throw Error('Audio converter did not load. Refresh the page.');
+        const normalized=await window.HatAudioConvert.convertBuffer(decoded,{sampleRate:22050});
+        const prepared=normalized.blob;
         if(state.dirty)await saveClip();
         const bare=file.name.replace(/\.[^.]+$/,'').trim()||'New recording';
         const base='import_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
-        const ext=(file.name.split('.').pop()||'mp3').toLowerCase();
         const duration=Math.round(decoded.duration*1000)/1000;
-        const fresh={id:base,title:bare.slice(0,75),duration,audio:base+'.'+ext,tracks:{jaw:[{t:0,v:0,ease:'linear'},{t:duration,v:0,ease:'linear'}],brow:[{t:0,v:.5,ease:'smooth'},{t:duration,v:.5,ease:'smooth'}]}};
+        const fresh={id:base,title:bare.slice(0,75),duration,audio:base+'.wav',tracks:{jaw:[{t:0,v:0,ease:'linear'},{t:duration,v:0,ease:'linear'}],brow:[{t:0,v:.5,ease:'smooth'},{t:duration,v:.5,ease:'smooth'}]}};
         state.project.clips.push(fresh);
         pagesProject=state.project;
         state.clip=fresh;
@@ -206,7 +208,7 @@
         state.loadToken++;
         stopPlayback();
         if(currentObjectURL)URL.revokeObjectURL(currentObjectURL);
-        currentObjectURL=URL.createObjectURL(file);
+        currentObjectURL=URL.createObjectURL(prepared);
         audio.src=currentObjectURL;
         audio.load();
         state.audioBuffer=decoded;
@@ -217,14 +219,16 @@
         await saveClip();
         try{localStorage.setItem('sorting-hat-last-clip',base);}catch(e){}
         $('clipTitle').textContent=fresh.title;
-        $('clipDescription').textContent=file.name+' · '+duration.toFixed(2)+' sec · MP3/audio ready';
+        $('clipDescription').textContent=file.name+' · '+duration.toFixed(2)+' sec · normalized WAV ready';
         $('totalTime').textContent=fmt(duration);
         $('trackStats').textContent='Jaw: '+fresh.tracks.jaw.length+' keys · Brows: '+fresh.tracks.brow.length+' keys';
         makeClipList();updateInspector();updateFace();render();
-        importStatus('✓ '+file.name+' imported ('+duration.toFixed(1)+'s). Waveform loaded; press ▶ to preview.','success','ready');
+        importStatus('✓ '+file.name+' converted to 22.05 kHz, 16-bit mono PCM WAV. Press ▶ to hear it.','success','ready');
         toast('MP3 imported! New clip “'+bare+'” is in the library.');
         // Persist independently of preview: browsers may block storage, but can still animate right now.
-        const result=await storedAudio(base,file);
+        const result=await storedAudio(base,prepared);
+        await storedAudio('source:'+base,file);
+        window.updateAudioInfo?.(prepared,decoded);
         if(result===null)importStatus('✓ '+file.name+' ready for this session. Browser storage blocked; export your project and audio before closing.','success');
       }catch(e){
         console.error('Sorting Hat import error',e);

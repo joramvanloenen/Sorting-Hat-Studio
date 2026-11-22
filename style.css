@@ -29,3 +29,18 @@
 .feather-export-button{border-color:#9d7044!important;color:#f4c98f!important;background:linear-gradient(180deg,#342719,#211d19)!important}
 .feather-export-button:hover{background:#49321d!important}
 .feather-export-button:disabled{opacity:.55;cursor:progress}
+
+/* Voice conversion: compact, accessible controls below the audio importer. */
+.audio-converter-panel{border:1px solid #393633;border-radius:10px;background:#1a1a1d;padding:12px;margin-top:13px;display:flex;flex-direction:column;gap:9px}
+.audio-converter-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;letter-spacing:.08em;color:#e0c49e}
+.audio-converter-heading span{font-size:9px;color:#858081}
+.audio-converter-panel .field{margin:0;font-size:11px}
+.audio-converter-panel .field select{width:100%;margin-top:5px}
+.audio-converter-actions{display:flex;gap:7px;flex-wrap:wrap}
+.audio-converter-actions button{flex:1 1 120px;white-space:nowrap;min-height:34px}
+.audio-converter-actions button:disabled{opacity:.44;cursor:default}
+.audio-converter-info{font-size:11px;line-height:1.45;color:#afa7a2;margin:0;overflow-wrap:anywhere}
+.audio-converter-info[data-status="ok"]{color:#a9ceab}
+.audio-converter-info[data-status="error"]{color:#f0a6a6}
+.audio-export-scope{display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#c3b5a7;line-height:1.4;cursor:pointer}
+.audio-export-scope input{flex:0 0 auto;margin-top:2px}

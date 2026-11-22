@@ -67,7 +67,23 @@
           <label class="check"><input id="autoGenerate" type="checkbox" checked/> Auto-generate both tracks after import</label>
           <button id="generateBtn" class="secondary-button">✦ Generate jaw + eyebrows</button>
           <button id="uploadBtn" class="ghost wide">↑ Import dialogue audio</button><input id="audioFile" type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a" hidden />
-          <div class="tip">Drop a WAV or MP3 onto the character or use Import dialogue audio. Both tracks remain editable; motion is speech-informed, not phoneme tracking.</div>
+          <div class="tip">Drop a WAV or MP3 onto the character or use Import dialogue audio. Recordings are converted to compatible PCM WAV before playback and Feather export.</div>
+           <section class="audio-converter-panel" aria-label="Audio converter">
+             <div class="audio-converter-heading"><strong>AUDIO CONVERTER</strong><span>OFFLINE · PCM WAV</span></div>
+             <label class="field" for="wavQuality">Voice quality
+               <select id="wavQuality">
+                 <option value="22050" selected>22.05 kHz · Recommended</option>
+                 <option value="32000">32 kHz · Higher fidelity / larger</option>
+                 <option value="16000">16 kHz · Compact / smaller</option>
+               </select>
+             </label>
+             <div class="audio-converter-actions">
+               <button type="button" class="primary small" id="convertAudioBtn">↻ Convert &amp; listen</button>
+               <button type="button" class="ghost small" id="downloadWavBtn">↓ Download WAV</button>
+             </div>
+             <p id="audioConvertInfo" class="audio-converter-info" role="status">Import a recording to enable conversion.</p>
+             <label class="audio-export-scope"><input id="featherSelectedOnly" type="checkbox" checked/> Export selected performance only (recommended for Feather memory)</label>
+           </section>
         </div>
         <div id="hardwareInspector" class="inspector-content hidden">
           <span class="eyebrow">SERVO CALIBRATION</span><h2>Safe travel limits</h2><p class="dim">Disconnect mechanical linkages before calibrating. Values are pulse widths; narrower ranges protect SG90 gears.</p>
@@ -93,7 +109,9 @@
 <div id="toast" class="toast" role="status"></div>
 <script src="./import-monitor.js?v=20261116-4"></script>
 <script src="./app.js?v=blank-library-20261122"></script>
-<script src="./auto-motion.js?v=fix-audio-bootstrap-20261117"></script>
-<script src="./feather-export.js?v=20261122-2"></script>
+<script src="./audio-converter.js?v=audio-fix-20261122-1"></script>
+<script src="./auto-motion.js?v=audio-normalize-20261122-1"></script>
+<script src="./audio-tools.js?v=audio-tools-20261122-1"></script>
+<script src="./feather-export.js?v=audio-safe-20261122-1"></script>
 </body>
 </html>
