@@ -1,0 +1,20 @@
+{
+  "jaw": {
+    "pin": "D4",
+    "min_us": 1200,
+    "max_us": 1750,
+    "invert": false,
+    "rest": 0
+  },
+  "brow": {
+    "pin": "D5",
+    "min_us": 1200,
+    "max_us": 1750,
+    "invert": false,
+    "rest": 0.5
+  },
+  "button_pin": "D9",
+  "audio_offset_ms": 0,
+  "start_on_boot": false,
+  "clip_gap_ms": 350
+}
