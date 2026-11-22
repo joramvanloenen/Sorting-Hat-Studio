@@ -62,7 +62,7 @@
   u32(e, 12, centralLength); u32(e, 16, position); u16(e, 20, 0);
   return new Blob([...local, ...central, end], {type:'application/zip'});
  }
- async function getAudio(clip, sampleRate) {
+ async function getAudio(clip, sampleRate, voice) {
   const source=await storedAudio('source:'+clip.id);
   const current=await storedAudio(clip.id);
   let blob=source||current;
@@ -72,12 +72,12 @@
    if(res.ok)blob=await res.blob();
   }
   if(!blob)throw Error('Audio missing for '+clip.title+'. Please re-import.');
-  if(!source&&current){
+  if(!voice&&!source&&current){
    const data=new Uint8Array(await current.arrayBuffer());
    const hdr=window.HatAudioConvert.readWaveHeader(data);
    if(hdr?.valid&&hdr.rate===sampleRate)return {path:'audio/'+clip.id+'.wav',bytes:data};
   }
-  const converted=await window.HatAudioConvert.convertBlob(blob,{sampleRate});
+  const converted=await window.HatAudioConvert.convertBlob(blob,{sampleRate,voice});
   const hdr=window.HatAudioConvert.readWaveHeader(converted.bytes);
   if(!hdr?.valid||hdr.rate!==sampleRate)throw Error('WAV validation failed for '+clip.title);
   return {path:'audio/'+clip.id+'.wav',bytes:converted.bytes};
@@ -111,6 +111,7 @@
    cfg.clip_id=(selected?.audio?selected:clips[0]).id;
    const wavRate=Number(document.getElementById('wavQuality')?.value||22050);
    window.HatAudioConvert.assertRate(wavRate);
+   const voice=window.getVoiceSettings?.()||{preset:'deep',bass:35};
    // Safe pulse settings from the browser's calibration panel.
    for (const ch of ['jaw', 'brow']) {
     const setting = state.settings && state.settings[ch];
@@ -123,7 +124,7 @@
     ['code.py', enc.encode(firmware)],
     ['config.json', enc.encode(JSON.stringify(cfg,null,2))],
    ];
-   const manifest = {version:1, platform:'feather-rp2040', clips:[]};
+   const manifest = {version:1, platform:'feather-rp2040', voiceCharacter:voice, clips:[]};
    for (const original of clips) {
     const id = safeId(original.id);
     const trackName = 'motion/' + id + '.json';
@@ -133,7 +134,7 @@
     if (original.audio) {
      button.textContent = 'Packing ' + id + '…';
      try {
-      const normalized=await getAudio(original,wavRate);
+      const normalized=await getAudio(original,wavRate,voice);
       files.push([normalized.path,normalized.bytes]);c.audio=normalized.path;
      } catch (e) {
       throw new Error('Audio conversion failed for ' + id + ': ' + e.message);

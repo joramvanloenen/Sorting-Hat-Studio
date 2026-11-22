@@ -15,13 +15,13 @@ const bytes=wav.encodeWav16(pcm,22050);
 const clip={id:'import_voice',title:'My recording',duration:1,audio:'import_voice.mp3',
  tracks:{jaw:[{t:0,v:0,ease:'linear'}],brow:[{t:0,v:.5,ease:'smooth'}]}};
 const button={textContent:'Export Feather',disabled:false,addEventListener:(event,cb)=>{if(event==='click')button.run=cb}};
-const quality={value:'22050'},onlySelected={checked:true};
+const quality={value:'22050'},onlySelected={checked:true},voice={preset:'deep',bass:35};
 const dom={documentElement:{dataset:{pages:'1'}},getElementById:id=>
  id==='exportFeatherBtn'?button:id==='wavQuality'?quality:id==='featherSelectedOnly'?onlySelected:null};
 let converted=0,download=null,feedback='';
-const wrapped={document:dom,window:{HatAudioConvert:{
+const wrapped={document:dom,window:{getVoiceSettings:()=>voice,HatAudioConvert:{
  readWaveHeader:wav.readWaveHeader,assertRate:wav.assertRate,
- convertBlob:async(blob,opts)=>{converted++;assert.equal(opts.sampleRate,22050);return {bytes}}
+ convertBlob:async(blob,opts)=>{converted++;assert.equal(opts.sampleRate,22050);assert.equal(opts.voice.preset,'deep');assert.equal(opts.voice.bass,35);return {bytes}}
 }},TextEncoder,Uint8Array,Uint32Array,DataView,Blob,
  state:{project:{clips:[clip]},clip,dirty:false,settings:{jaw:{rest:0,min_us:1200,max_us:1750,invert:false},brow:{rest:.5,min_us:1200,max_us:1750,invert:false}}},
  storedAudio:async key=>key==='source:import_voice'?new Blob([Uint8Array.from([73,68,51,0,0,0])],{type:'audio/mpeg'}):null,
@@ -53,6 +53,8 @@ function archiveEntries(data){
  const project=JSON.parse(Buffer.from(entries['project.json']).toString());
  assert.equal(project.clips.length,1);
  assert.equal(project.clips[0].audio,'audio/import_voice.wav');
+ assert.equal(project.voiceCharacter.preset,'deep');
+ assert.equal(project.voiceCharacter.bass,35);
  assert.equal(JSON.parse(Buffer.from(entries['config.json']).toString()).clip_id,'import_voice');
  assert.equal(converted,1);
  assert.match(feedback,/PCM16 mono WAV/);

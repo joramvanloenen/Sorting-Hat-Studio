@@ -53,7 +53,8 @@
   try {
    const original=await getSource(clip);
    status('Decoding, resampling and normalizing…');
-   const result=await window.HatAudioConvert.convertBlob(original,{sampleRate:rate()});
+   const voice=download?(window.getVoiceSettings?.()||{preset:'deep',bass:35}):undefined;
+   const result=await window.HatAudioConvert.convertBlob(original,{sampleRate:rate(),voice});
    if(state.clip?.id!==clipid||!state.clip.audio)throw Error('The audio was removed while converting; retry the operation');
    const h=window.HatAudioConvert.readWaveHeader(result.bytes);
    if(!h?.valid)throw Error('Converted audio did not pass WAV validation');
@@ -61,7 +62,7 @@
      result.details.duration.toFixed(2)+' s · '+size(result.bytes.byteLength);
    if(download){
     downloadFile(clipid+'.wav',result.blob);
-    status('Compatible WAV downloaded · '+metadata,'ok');
+    status('Voice-processed WAV downloaded · '+metadata,'ok');
     toast('Downloaded CircuitPython-compatible '+metadata);
     return;
    }
