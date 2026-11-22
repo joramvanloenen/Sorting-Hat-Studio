@@ -1,0 +1,26 @@
+/* Pure audio converter regression tests (Node 20+, no browser needed). */
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const source=fs.readFileSync('audio-converter.js','utf8');
+const context={window:{},Float32Array,Uint8Array,DataView,Blob};
+vm.runInNewContext(source,context);
+const wav=context.window.HatAudioConvert;
+const samples=new Float32Array(22050);
+for(let i=0;i<samples.length;i++)samples[i]=.2*Math.sin(2*Math.PI*440*i/22050);
+const adjusted=wav.normalize(samples,{sampleRate:22050});
+assert(adjusted.converted.peak>.5&&adjusted.converted.peak<=.85);
+const encoded=wav.encodeWav16(adjusted.samples,22050);
+const h=wav.readWaveHeader(encoded);
+assert.equal(encoded.length,44144);
+assert.equal(h.valid,true);
+assert.equal(h.codec,1);
+assert.equal(h.channels,1);
+assert.equal(h.bits,16);
+assert.equal(h.rate,22050);
+assert.equal(h.dataBytes,44100);
+assert.equal(wav.readWaveHeader(new Uint8Array(44)),null);
+assert.throws(()=>wav.normalize(new Float32Array(100),{sampleRate:22050}),/silent/);
+assert.throws(()=>wav.assertRate(48000),/Select/);
+for(const rate of [16000,32000])assert.equal(wav.readWaveHeader(wav.encodeWav16(new Float32Array(100),rate)).rate,rate);
+console.log('WAV encoder: PCM16, mono, 16/22.05/32 kHz, silence rejection — passed');
