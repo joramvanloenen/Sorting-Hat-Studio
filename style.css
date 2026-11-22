@@ -24,3 +24,8 @@
 .scrub-audio-control:focus-within{outline:2px solid #d6ab6d;outline-offset:2px}
 @media(max-width:1050px){.timeline-header{flex-wrap:wrap}.timeline-actions{flex-wrap:wrap;justify-content:flex-end;gap:7px}}
 @media(max-width:800px){.timeline-actions{justify-content:flex-start}.scrub-audio-control{padding:8px 11px}}
+
+/* Single-action CircuitPython export, compact in the main action bar */
+.feather-export-button{border-color:#9d7044!important;color:#f4c98f!important;background:linear-gradient(180deg,#342719,#211d19)!important}
+.feather-export-button:hover{background:#49321d!important}
+.feather-export-button:disabled{opacity:.55;cursor:progress}

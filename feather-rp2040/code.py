@@ -125,7 +125,16 @@ def audio_sample(path):
 def play_clip(clip, jaw, brow, button, audio, cfg):
     name = clip.get("id", "untitled")
     duration = max(0.0, float(clip.get("duration", 0.0)))
-    tracks = clip.get("tracks") or {}
+    # Feather exports keep each clip's keyframes in its own file so the
+    # 264-KB-RAM RP2040 never has to parse every timeline at once.
+    motion_path = clip.get("motion")
+    if motion_path:
+        if ".." in motion_path or motion_path.startswith("/"):
+            raise ValueError("Unsafe motion path: " + motion_path)
+        motion = load_json("/" + motion_path, {})
+        tracks = motion.get("tracks") or {}
+    else:
+        tracks = clip.get("tracks") or {}
     jaw_keys = tracks.get("jaw") or []
     brow_keys = tracks.get("brow") or []
     source = None

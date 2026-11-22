@@ -12,7 +12,7 @@
 <body>
 <header class="topbar">
   <div class="identity"><div class="mark">S<span>H</span></div><div><div class="brand">SORTING HAT <span>STUDIO</span></div><div class="subbrand">LOCAL AUDIO + MOTION EDITOR · NO CONNECTION NEEDED</div></div></div>
-  <div class="top-actions"><div class="connection"><span id="connectionDot" class="dot"></span><span id="connectionText">LOCAL EDITOR</span></div><button class="ghost quick-upload" id="quickUploadBtn">↑ Audio → Motion</button><button class="ghost" id="saveBtn">Save changes <span class="keyhint">⌘S</span></button><button class="ghost" id="importProjectBtn">Import JSON</button><button class="ghost" id="exportProjectBtn">Export JSON</button><button class="primary" id="ceremonyBtn">✦ Preview ceremony</button><input type="file" id="importProjectFile" accept="application/json,.json" hidden></div>
+  <div class="top-actions"><div class="connection"><span id="connectionDot" class="dot"></span><span id="connectionText">LOCAL EDITOR</span></div><button class="ghost quick-upload" id="quickUploadBtn">↑ Audio → Motion</button><button class="ghost" id="saveBtn">Save changes <span class="keyhint">⌘S</span></button><button class="ghost" id="importProjectBtn">Import JSON</button><button class="ghost" id="exportProjectBtn">Export JSON</button><button class="ghost feather-export-button" id="exportFeatherBtn" title="Export firmware, motion tracks and audio as a CircuitPython ZIP">↓ Export Feather</button><button class="primary" id="ceremonyBtn">✦ Preview ceremony</button><input type="file" id="importProjectFile" accept="application/json,.json" hidden></div>
 </header>
 <section id="importMonitor" class="import-monitor" data-phase="idle" role="status" aria-live="polite">
   <div class="import-monitor-icon" id="importMonitorIcon" aria-hidden="true">♫</div>
@@ -94,5 +94,6 @@
 <script src="./import-monitor.js?v=20261116-4"></script>
 <script src="./app.js?v=audio-scrub-20261117"></script>
 <script src="./auto-motion.js?v=fix-audio-bootstrap-20261117"></script>
+<script src="./feather-export.js?v=20261122-1"></script>
 </body>
 </html>

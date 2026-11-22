@@ -36,7 +36,11 @@ Folder layout of the ZIP:
 CIRCUITPY/
   code.py            # player — copied from this folder
   config.json        # pin mapping and servo calibration
-  project.json       # matching keyframes for exported recordings
+  project.json       # small clip manifest (kept in RAM)
+  motion/
+    intro.json       # jaw/brow keyframes (loaded only when needed)
+    ponder.json
+    ...
   audio/
     intro.mp3
     ponder.mp3
@@ -52,6 +56,7 @@ The default exported servo limits are **1200–1750 microseconds**. These are co
 
 - **No CIRCUITPY drive:** hold BOOTSEL while connecting USB to enter UF2 mode, install board-specific CircuitPython, use a USB **data** cable.
 - **No sound:** confirm A0→BCLK, A1→LRC, A2→DIN, 3V→VIN, GND→GND, speaker to SPK+/SPK−. Verify the ZIP really contains `audio/` files.
+- **Memory errors:** the Feather export deliberately stores animations as separate `motion/<clip>.json` files instead of loading all keyframes into RAM. Use the **Export Feather** feature rather than copying the Pi's much larger project.json directly.
 - **Audio glitches:** try a modest MP3 bitrate (e.g., mono 64–96 kbps, 22.05 or 44.1 kHz). The RP2040 is decoding audio while updating PWM.
 - **Random servo resets:** power servos from a dedicated regulated 5 V rail and join grounds.
 - **Button does nothing:** check D9 ↔ GND and ensure `project.json` contains clips.
