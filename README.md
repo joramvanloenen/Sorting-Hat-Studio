@@ -28,10 +28,10 @@ The timeline is speech-energy-informed, not a phoneme recognition system. It del
 - **Expression preview:** 2D animated face preview without any Raspberry Pi hardware, with optional live servo preview when running on the Pi.
 - **Offline natural audio-to-motion:** import a voice file and automatically generate editable jaw and independent phrase-based eyebrow curves in the browser.
 - **Independent brow acting:** expressive gestures generated around phrase boundaries, with hand-editable keyframes for precise acting.
-- **Standalone performance:** hidden GPIO22 button triggers `intro` → `ponder` → random house announcement. Six clips are already configured. For a fresh checkout, run the demo-audio conversion script (below) to prepare them as WAV files for Pi playback.
+- **Standalone clip playback:** optional GPIO22 button plays a single configured clip (`trigger_clip` in settings). Existing demo recordings remain available individually. For a fresh checkout, run the demo-audio conversion script (below) to prepare them as WAV files for Pi playback.
 - **Servo calibration:** programmable safe min/max pulse widths, inverted direction, and rest pose.
 - **Adjustable sync offset:** milliseconds of playback latency compensation for `aplay` and the MAX98357A ALSA driver.
-- **Simulation mode:** the editor and ceremony logic run on any PC with Python 3.10+.
+- **Simulation mode:** the editor and individual-clip player run on any PC with Python 3.10+.
 - **Pi hardware mode:** pigpio DMA-based servo pulses, using PWM clock mode to keep the PCM/I²S interface available.
 
 ## Hardware wiring
@@ -141,17 +141,17 @@ cd sorting-hat-studio
 python3 server.py
 ```
 
-Open `http://127.0.0.1:8080` in your browser. The face, editor, timeline and ceremony logic work. **Actual GPIO and speaker playback require the Pi hardware**, and audio import requires `ffmpeg` to be installed on the machine running the server.
+Open `http://127.0.0.1:8080` in your browser. The face, editor, timeline and individual clip playback work. **Actual GPIO and speaker playback require the Pi hardware**, and audio import requires `ffmpeg` to be installed on the machine running the server.
 
 ## Using the editor
 
-1. Choose one of the six library clips: intro, pondering and one announcement per Hogwarts house.
+1. Choose any recording from the library. Existing demo audio files remain independent clips.
 2. Click **Import dialogue audio** and supply your own original voice recording (MP3/WAV/OGG/etc.). It is converted locally to standard stereo PCM WAV for reliable ALSA playback. The included eSpeak demo voice is deliberately robotic and can be replaced at any time.
 3. Select **Generate jaw keyframes** to create a rough mouth performance from audio energy. Tune intensity and silence threshold. This changes *only* the jaw animation.
 4. Edit by double-clicking a track to add a keyframe, dragging to change time/expression, clicking a point for numeric edits, and pressing Delete to remove. Curve easing is assigned to the segment **after** the selected key.
-5. Create your own eyebrow expressions for thoughtful pauses, reactions and the house reveal.
+5. Create your own eyebrow expressions for thoughtful pauses and reactions.
 6. Press ▶ beside the timeline for browser audio + motion preview. Enable **Live servos** after connecting/calibrating the Pi hardware. Browser-to-Pi servo preview over Wi-Fi can have latency.
-7. Press **Play on Pi** to hear an actual synchronized performance on the Pi. Use **Run ceremony on Pi** or your physical hidden button to start the full standalone sequence.
+7. Press **Play on Pi** to hear an actual synchronized performance of the selected clip. The optional GPIO22 button plays one clip identified by `trigger_clip` in settings.
 
 Pi-hosted edits are saved automatically into `data/project.json`; hardware configuration is saved to `data/settings.json`. Imported audio is stored under `data/audio/`.
 
@@ -184,7 +184,7 @@ The editor uses no third-party JavaScript frameworks. Backend requires only the 
 
 ## Browser-only GitHub Pages editor
 
-The live site provides the animated face, timeline, waveform, clip library, ceremony preview, and local editing; **GitHub Pages cannot execute Python or control GPIO**. Changes save to this browser (localStorage + IndexedDB), not your GitHub repository. Use **Export JSON** and transfer that `project.json` to the Pi `data/project.json`; convert downloaded audio to `data/audio/<clip-id>.wav` with `ffmpeg -i source.mp3 -ar 44100 -ac 2 -c:a pcm_s16le dest.wav`. The Pi's own editor at `http://<PI_IP>:8080` can upload audio and operate the servos directly.
+The live site provides the animated face, timeline, waveform, clip library, individual-clip preview, and local editing; **GitHub Pages cannot execute Python or control GPIO**. Changes save to this browser (localStorage + IndexedDB), not your GitHub repository. Use **Export JSON** and transfer that `project.json` to the Pi `data/project.json`; convert downloaded audio to `data/audio/<clip-id>.wav` with `ffmpeg -i source.mp3 -ar 44100 -ac 2 -c:a pcm_s16le dest.wav`. The Pi's own editor at `http://<PI_IP>:8080` can upload audio and operate the servos directly.
 
 To initialise demo audio after cloning:
 

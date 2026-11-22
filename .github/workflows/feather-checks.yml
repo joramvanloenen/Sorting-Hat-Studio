@@ -19,5 +19,7 @@ jobs:
           python-version: '3.11'
       - name: Check firmware syntax
         run: python -m py_compile feather-rp2040/code.py
-      - name: Test keyframe interpolation, servo pulses, buttons and ceremonies
+      - name: Test keyframe interpolation, servo pulses, buttons and single clip selection
         run: python -m unittest discover -s tests -p 'test_feather_player.py' -v
+      - name: Test Pi clip playback and settings
+        run: python -m unittest discover -s tests -p 'test_core.py' -v
