@@ -16,5 +16,5 @@
   "button_pin": "D9",
   "audio_offset_ms": 0,
   "start_on_boot": false,
-  "clip_gap_ms": 350
+  "clip_id": "intro"
 }

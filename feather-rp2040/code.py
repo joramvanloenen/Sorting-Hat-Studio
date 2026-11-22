@@ -9,7 +9,6 @@ import audiobusio
 import audiomp3
 import audiocore
 import json
-import random
 import time
 import gc
 
@@ -21,7 +20,7 @@ DEFAULT_CONFIG = {
     "button_pin": "D9",
     "audio_offset_ms": 0,
     "start_on_boot": False,
-    "clip_gap_ms": 350
+    "clip_id": "intro"
 }
 
 def clamp(x, lo=0.0, hi=1.0):
@@ -192,33 +191,23 @@ def play_clip(clip, jaw, brow, button, audio, cfg):
         jaw.home()
         brow.home()
 
-def ceremony_ids(clips):
-    available = {c.get("id") for c in clips}
-    houses = [c["id"] for c in clips if str(c.get("id", "")).startswith("house_") and c.get("id")]
-    sequence = [name for name in ("intro", "ponder") if name in available]
-    if houses:
-        sequence.append(random.choice(houses))
-    if not sequence and clips:
-        sequence = [clips[0]["id"]]
-    return sequence
+def selected_clip(project, config):
+    """Pick exactly one recording; fall back to the first available clip."""
+    clips = project.get("clips") or []
+    if not clips:
+        return None
+    wanted = config.get("clip_id", "intro")
+    for clip in clips:
+        if clip.get("id") == wanted:
+            return clip
+    return clips[0]
 
-def run_ceremony(project, jaw, brow, button, audio, config):
-    clips = {clip["id"]: clip for clip in project.get("clips", []) if clip.get("id")}
-    ids = ceremony_ids(list(clips.values()))
-    if not ids:
-        print("No clips found. Export a Feather pack from Sorting Hat Studio.")
+def play_selected_clip(project, jaw, brow, button, audio, config):
+    clip = selected_clip(project, config)
+    if clip is None:
+        print("No recordings found. Export a Feather pack from Sorting Hat Studio.")
         return
-    print("Ceremony:", " -> ".join(ids))
-    for i, clip_id in enumerate(ids):
-        if not play_clip(clips[clip_id], jaw, brow, button, audio, config):
-            break
-        if i + 1 < len(ids):
-            end = time.monotonic() + max(0.0, float(config.get("clip_gap_ms", 350))) / 1000.0
-            while time.monotonic() < end:
-                if button.pressed():
-                    print("Ceremony stopped")
-                    return
-                time.sleep(0.02)
+    play_clip(clip, jaw, brow, button, audio, config)
     print("Ready")
 
 def main():
@@ -235,10 +224,10 @@ def main():
             print("I2S setup error:", exc, "(servos can still move silently)")
         print("Sorting Hat Feather ready. Press button (D9 to GND).")
         if config.get("start_on_boot", False):
-            run_ceremony(project, jaw, brow, button, audio, config)
+            play_selected_clip(project, jaw, brow, button, audio, config)
         while True:
             if button.pressed():
-                run_ceremony(project, jaw, brow, button, audio, config)
+                play_selected_clip(project, jaw, brow, button, audio, config)
             time.sleep(0.02)
     finally:
         if audio:

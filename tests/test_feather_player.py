@@ -13,7 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "feather-rp2040" / "code.py"
 TREE = ast.parse(SOURCE.read_text(encoding="utf-8"), filename=str(SOURCE))
 WANTED = {
-    "clamp", "ease", "sample_track", "ceremony_ids",
+    "clamp", "ease", "sample_track", "selected_clip",
     "Servo", "TriggerButton", "play_clip",
 }
 
@@ -69,7 +69,7 @@ extract = ast.Module(
     type_ignores=[],
 )
 exec(compile(extract, str(SOURCE), "exec"), ENV)
-clamp, sample_track, ceremony_ids = (ENV[x] for x in ("clamp", "sample_track", "ceremony_ids"))
+clamp, sample_track, selected_clip = (ENV[x] for x in ("clamp", "sample_track", "selected_clip"))
 
 
 class MotionTests(unittest.TestCase):
@@ -98,13 +98,11 @@ class MotionTests(unittest.TestCase):
         self.assertTrue(0 <= sample_track(duplicates, 0.5) <= 1)
         self.assertEqual(sample_track([], 0.5, 0.42), 0.42)
 
-    def test_ceremony_uses_one_house(self):
-        clips = [{"id": n} for n in ["intro", "ponder", "house_a", "house_b"]]
-        random.seed(11)
-        ids = ceremony_ids(clips)
-        self.assertEqual(ids[:2], ["intro", "ponder"])
-        self.assertIn(ids[2], ["house_a", "house_b"])
-        self.assertEqual(len(ids), 3)
+    def test_one_selected_clip_not_multi_clip_sequence(self):
+        project = {"clips": [{"id": n} for n in ["intro", "ponder", "house_a"]]}
+        self.assertEqual(selected_clip(project, {"clip_id": "ponder"})["id"], "ponder")
+        self.assertEqual(selected_clip(project, {"clip_id": "missing"})["id"], "intro")
+        self.assertIsNone(selected_clip({"clips": []}, {}))
 
     def test_pwm_conservative_mapping_and_inversion(self):
         cfg = {"pin": "D4", "rest": 0.0, "min_us": 1200, "max_us": 1750, "invert": False}

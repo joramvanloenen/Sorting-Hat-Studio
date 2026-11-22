@@ -169,7 +169,7 @@
     '3. MAX98357A: A0=BCLK, A1=LRC, A2=DIN, 3V=VIN, GND=GND.\r\n' +
     '4. Jaw servo signal D4; brow servo signal D5; button D9 to GND.\r\n' +
     '5. Servos need a dedicated 5V supply and shared ground.\r\n' +
-    '6. Press the button for intro > ponder > random house.\r\n' +
+    '6. Press the button to play the clip selected in config.json (clip_id).\r\n' +
     '7. For power-on playback: config.json start_on_boot = true.\r\n\r\n' +
     'Full instructions: https://github.com/joramvanloenen/Sorting-Hat-Studio/tree/main/feather-rp2040\r\n'
    )]);

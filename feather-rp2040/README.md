@@ -26,8 +26,8 @@ Do not attach servo motors to the Feather 3V pin; **never put 5 V on Feather GPI
 
 1. Download CircuitPython for **Feather RP2040** from [circuitpython.org/board/adafruit_feather_rp2040](https://circuitpython.org/board/adafruit_feather_rp2040/). Install the board-specific **UF2**: hold BOOTSEL while plugging USB into your Windows PC, then copy the UF2 to the **RPI-RP2** drive. The board should restart and show a **CIRCUITPY** drive.
 2. Open the [Sorting Hat Studio browser editor](https://joramvanloenen.github.io/Sorting-Hat-Studio/). Import/edit dialogue and select **Export Feather**. The resulting ZIP holds the files below, including audio; extract its contents to the **root** of **CIRCUITPY**, not a subfolder.
-3. Connect the servos and amp as above, provide a shared ground, and press a button wired between **D9 and GND**. The hat will speak the **intro → ponder → random house** sequence.
-4. **Press again during playback to stop**. The project sits idle between performances.
+3. Connect the servos and amp as above, provide a shared ground, and press a button wired between **D9 and GND**. The hat will play **one recording** identified by `clip_id` in `config.json`.
+4. **Press again during playback to stop**. The player stays idle between recordings.
 5. To make the hat speak as soon as power is applied, edit `config.json` and set `"start_on_boot": true`.
 
 Folder layout of the ZIP:
@@ -68,9 +68,9 @@ The default exported servo limits are **1200–1750 microseconds**. These are co
 ## Behavior
 
 - Fresh power-up: initializes output, enters ready mode without any Wi-Fi or Linux boot.
-- Trigger press: plays `intro`, then `ponder`, then one randomly selected `house_*` clip.
+- Trigger press: plays only the clip selected with `"clip_id": "intro"` (or another clip ID) in `config.json`.
 - During a clip: audio streams to the MAX98357A; jaw and brow values interpolate keyframes at approximately 50 updates/second. `linear`, `smooth`, and `hold` easing are respected.
-- Trigger press during playback: immediately stops the ceremony and returns the servos to their configured rest positions.
-- `start_on_boot=true`: optionally runs the ceremony on each power-up. Leave false when using a brim switch.
+- Trigger press during playback: immediately stops the recording and returns the servos to their configured rest positions.
+- `start_on_boot=true`: optionally plays the selected recording on power-up. Leave false when using a brim switch.
 
 The system measures animation time against the monotonic clock after starting the audio decoder. It is **not sample-clock synchronization**; use `audio_offset_ms` to adjust perceived timing if necessary.
