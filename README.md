@@ -28,7 +28,7 @@ The timeline is speech-energy-informed, not a phoneme recognition system. It del
 - **Expression preview:** 2D animated face preview without any Raspberry Pi hardware, with optional live servo preview when running on the Pi.
 - **Offline natural audio-to-motion:** import a voice file and automatically generate editable jaw and independent phrase-based eyebrow curves in the browser.
 - **Independent brow acting:** expressive gestures generated around phrase boundaries, with hand-editable keyframes for precise acting.
-- **Standalone clip playback:** optional GPIO22 button plays a single configured clip (`trigger_clip` in settings). Existing demo recordings remain available individually. For a fresh checkout, run the demo-audio conversion script (below) to prepare them as WAV files for Pi playback.
+- **Standalone clip playback:** optional GPIO22 button plays a single configured clip (`trigger_clip` in settings). New projects begin with a blank performance. For a fresh checkout, run the demo-audio conversion script (below) to prepare them as WAV files for Pi playback.
 - **Servo calibration:** programmable safe min/max pulse widths, inverted direction, and rest pose.
 - **Adjustable sync offset:** milliseconds of playback latency compensation for `aplay` and the MAX98357A ALSA driver.
 - **Simulation mode:** the editor and individual-clip player run on any PC with Python 3.10+.
@@ -145,7 +145,7 @@ Open `http://127.0.0.1:8080` in your browser. The face, editor, timeline and ind
 
 ## Using the editor
 
-1. Choose any recording from the library. Existing demo audio files remain independent clips.
+1. Choose any recording from the library. The six previous ceremony demonstration entries are no longer included.
 2. Click **Import dialogue audio** and supply your own original voice recording (MP3/WAV/OGG/etc.). It is converted locally to standard stereo PCM WAV for reliable ALSA playback. The included eSpeak demo voice is deliberately robotic and can be replaced at any time.
 3. Select **Generate jaw keyframes** to create a rough mouth performance from audio energy. Tune intensity and silence threshold. This changes *only* the jaw animation.
 4. Edit by double-clicking a track to add a keyframe, dragging to change time/expression, clicking a point for numeric edits, and pressing Delete to remove. Curve easing is assigned to the segment **after** the selected key.
@@ -191,3 +191,11 @@ To initialise demo audio after cloning:
 ```bash
 bash scripts/prepare-demo-audio.sh
 ```
+
+## No more bundled ceremony performances
+
+Fresh installs show a single empty **New Performance**. The old six library entries (Awakening, Considering and the four houses) are removed from the default project data.
+
+The online editor automatically migrates `sorting-hat-pages-project-v1` into `sorting-hat-pages-project-v2`: previously imported custom recordings are kept, while the old factory entries are hidden. The complete previous project is backed up in localStorage under `sorting-hat-legacy-project-backup-v1`, so edits made to a factory entry are not permanently discarded. Browser-stored audio files are not deleted.
+
+A previously installed Pi stores its own `data/project.json`, so updating the repository alone does not overwrite that file. Backup and replace it with the new blank `data/project.json` if you want the same reset on the Pi.

@@ -68,9 +68,11 @@ The default exported servo limits are **1200–1750 microseconds**. These are co
 ## Behavior
 
 - Fresh power-up: initializes output, enters ready mode without any Wi-Fi or Linux boot.
-- Trigger press: plays only the clip selected with `"clip_id": "intro"` (or another clip ID) in `config.json`.
+- Trigger press: plays only the clip selected with `"clip_id": "performance_1"` (or another clip ID) in `config.json`.
 - During a clip: audio streams to the MAX98357A; jaw and brow values interpolate keyframes at approximately 50 updates/second. `linear`, `smooth`, and `hold` easing are respected.
 - Trigger press during playback: immediately stops the recording and returns the servos to their configured rest positions.
 - `start_on_boot=true`: optionally plays the selected recording on power-up. Leave false when using a brim switch.
 
 The system measures animation time against the monotonic clock after starting the audio decoder. It is **not sample-clock synchronization**; use `audio_offset_ms` to adjust perceived timing if necessary.
+
+**Editor export:** the one-click Feather ZIP now automatically sets `clip_id` to the currently selected editor performance. The bundled blank starter performance contains no speech until you import audio.
