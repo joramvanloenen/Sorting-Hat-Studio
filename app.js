@@ -35,6 +35,25 @@ async function storedAudio(id, val) {
   });
  }catch(e){console.warn('Audio database unavailable',e);return null}
 }
+async function deleteStoredAudio(id){
+ // Remove both the normalized WAV and the retained source recording.
+ // Resolve only when IndexedDB confirms the transaction has committed.
+ const db=await openAudioDB();
+ try{
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('clips','readwrite'),store=tx.objectStore('clips');
+   store.delete(id);store.delete('source:'+id);
+   tx.oncomplete=()=>resolve();
+   tx.onerror=()=>reject(tx.error||Error('Browser audio deletion failed'));
+   tx.onabort=()=>reject(tx.error||Error('Browser audio deletion aborted'));
+  });
+ }finally{db.close()}
+}
+function emptyPerformance(){
+ return {id:'performance_1',title:'New Performance',duration:4,audio:null,
+ tracks:{jaw:[{t:0,v:0,ease:'smooth'},{t:4,v:0,ease:'smooth'}],
+ brow:[{t:0,v:.5,ease:'smooth'},{t:4,v:.5,ease:'smooth'}]}};
+}
 function downloadFile(name, blob){
  const url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
@@ -65,6 +84,26 @@ async function pagesApi(path,method,data){
    }return pagesSettings;
   }
   pagesSettings=structuredClone(data);localStorage.setItem(STORAGE_SETTINGS,JSON.stringify(pagesSettings));return pagesSettings;
+ }
+ if(path.startsWith('/api/audio/')&&method==='DELETE'){
+  const id=path.split('/').at(-1);
+  const idx=pagesProject.clips.findIndex(c=>c.id===id);
+  if(idx<0)throw Error('Performance not found');
+  if(!pagesProject.clips[idx].audio)throw Error('This performance has no audio');
+  await deleteStoredAudio(id);
+  pagesProject.clips[idx]={...pagesProject.clips[idx],audio:null};
+  localStorage.setItem(STORAGE_PROJECT,JSON.stringify(pagesProject));
+  return structuredClone(pagesProject.clips[idx]);
+ }
+ if(path.startsWith('/api/clip/')&&method==='DELETE'){
+  const id=path.split('/').at(-1);
+  const idx=pagesProject.clips.findIndex(c=>c.id===id);
+  if(idx<0)throw Error('Performance not found');
+  await deleteStoredAudio(id);
+  pagesProject.clips.splice(idx,1);
+  if(!pagesProject.clips.length)pagesProject.clips.push(emptyPerformance());
+  localStorage.setItem(STORAGE_PROJECT,JSON.stringify(pagesProject));
+  return {deleted:true,clips:structuredClone(pagesProject.clips)};
  }
  if(path.startsWith('/api/clip/')&&method==='POST'){
   const id=path.split('/').at(-1),index=pagesProject.clips.findIndex(c=>c.id===id);
@@ -189,12 +228,58 @@ function makeClipList(){
  $('clipList').innerHTML='';
  if($('clipCount'))$('clipCount').textContent=String(state.project.clips.length).padStart(2,'0')+' CLIP'+(state.project.clips.length===1?'':'S');
  state.project.clips.forEach((clip,i)=>{
+  const row=document.createElement('div');row.className='clip-entry';
   const button=document.createElement('button');button.className='clip'+(clip.id===state.clip?.id?' active':'');
-  button.innerHTML=`<span class="clip-icon">${icons[i]||'✦'}</span><div><div class="clip-title"></div><div class="clip-meta"></div></div>`;
+  button.innerHTML=`<span class="clip-icon">${icons[i%icons.length]}</span><div class="clip-summary"><div class="clip-title"></div><div class="clip-meta"></div></div>`;
   button.querySelector('.clip-title').textContent=clip.title;
   button.querySelector('.clip-meta').textContent=`${clip.duration.toFixed(1)}s · ${clip.audio?'audio ready':'no audio'}`;
-  button.addEventListener('click',()=>selectClip(clip.id));$('clipList').append(button);
+  button.addEventListener('click',()=>selectClip(clip.id));row.append(button);
+  const actions=document.createElement('div');actions.className='clip-actions';
+  const strip=document.createElement('button');
+  strip.type='button';strip.className='clip-remove-audio';
+  strip.textContent='♫×';strip.title='Remove audio from '+clip.title+' (keep motion)';
+  strip.setAttribute('aria-label','Remove audio from '+clip.title);
+  strip.disabled=!clip.audio;
+  strip.addEventListener('click',()=>removePerformanceAudio(clip.id));
+  actions.append(strip);
+  const del=document.createElement('button');
+  del.type='button';del.className='clip-delete';
+  del.textContent='×';del.title='Delete performance '+clip.title+' and its audio';
+  del.setAttribute('aria-label','Delete performance '+clip.title);
+  del.addEventListener('click',()=>deletePerformance(clip.id));
+  actions.append(del);row.append(actions);$('clipList').append(row);
  });
+}
+async function removePerformanceAudio(id){
+ const clip=getClip(id);
+ if(!clip?.audio)return;
+ if(!confirm('Remove the audio from “'+clip.title+'”? Your jaw and eyebrow keyframes will remain.'))return;
+ try{
+  if(state.clip?.id===id && state.dirty)await saveClip();
+  const result=await api('/api/audio/'+encodeURIComponent(id),'DELETE');
+  const idx=state.project.clips.findIndex(c=>c.id===id);
+  if(idx>=0)state.project.clips[idx]=result;
+  if(state.clip?.id===id){
+   stopPlayback();releaseScrubGrain();window.releaseImportedAudioURL?.();
+   state.dirty=false;state.clip=null;
+   await selectClip(id);
+   window.setImportStatus?.('idle','Audio removed. Keyframes were preserved. Import a new recording whenever you like.');
+  }else makeClipList();
+  toast('Audio removed from “'+clip.title+'”. Animation retained.');
+ }catch(err){toast('Could not remove audio: '+err.message);console.error(err)}
+}
+async function deletePerformance(id){
+ const clip=getClip(id);
+ if(!clip)return;
+ if(!confirm('Delete “'+clip.title+'” and its audio from the library? This also removes its animation keyframes.'))return;
+ try{
+  if(state.clip?.id===id){stopPlayback();releaseScrubGrain();window.releaseImportedAudioURL?.();state.dirty=false;clearTimeout(state.saveTimer)}
+  const result=await api('/api/clip/'+encodeURIComponent(id),'DELETE');
+  state.project.clips=result.clips;
+  state.clip=null;state.selected=null;state.dirty=false;
+  await selectClip(state.project.clips[0].id);
+  toast('Performance deleted.');
+ }catch(err){toast('Could not delete performance: '+err.message);console.error(err)}
 }
 async function selectClip(id){
  if(state.clip?.id===id)return;
