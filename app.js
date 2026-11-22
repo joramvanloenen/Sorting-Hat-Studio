@@ -273,11 +273,18 @@ async function deletePerformance(id){
  if(!clip)return;
  if(!confirm('Delete “'+clip.title+'” and its audio from the library? This also removes its animation keyframes.'))return;
  try{
-  if(state.clip?.id===id){stopPlayback();releaseScrubGrain();window.releaseImportedAudioURL?.();state.dirty=false;clearTimeout(state.saveTimer)}
+  const deletingSelected=state.clip?.id===id;
+  const previousId=deletingSelected?null:state.clip?.id;
+  if(!deletingSelected&&state.dirty)await saveClip();
+  if(deletingSelected){
+   stopPlayback();releaseScrubGrain();window.releaseImportedAudioURL?.();
+   state.dirty=false;clearTimeout(state.saveTimer);
+  }
   const result=await api('/api/clip/'+encodeURIComponent(id),'DELETE');
   state.project.clips=result.clips;
   state.clip=null;state.selected=null;state.dirty=false;
-  await selectClip(state.project.clips[0].id);
+  const next=state.project.clips.find(c=>c.id===previousId)||state.project.clips[0];
+  await selectClip(next.id);
   toast('Performance deleted.');
  }catch(err){toast('Could not delete performance: '+err.message);console.error(err)}
 }

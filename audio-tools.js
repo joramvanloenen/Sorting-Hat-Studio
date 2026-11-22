@@ -54,7 +54,7 @@
    const original=await getSource(clip);
    status('Decoding, resampling and normalizing…');
    const result=await window.HatAudioConvert.convertBlob(original,{sampleRate:rate()});
-   if(state.clip?.id!==clipid)throw Error('Selected performance changed; retry conversion');
+   if(state.clip?.id!==clipid||!state.clip.audio)throw Error('The audio was removed while converting; retry the operation');
    const h=window.HatAudioConvert.readWaveHeader(result.bytes);
    if(!h?.valid)throw Error('Converted audio did not pass WAV validation');
    const metadata=(rate()/1000).toFixed(2)+' kHz · PCM16 mono · '+

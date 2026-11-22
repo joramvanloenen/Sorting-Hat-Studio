@@ -162,6 +162,10 @@
   if(isPages){
     // Fully self-contained: decode and keep the audio in this browser. No Pi requests.
     let currentObjectURL=null;
+    window.releaseImportedAudioURL=()=>{
+      if(currentObjectURL)URL.revokeObjectURL(currentObjectURL);
+      currentObjectURL=null;
+    };
     const uploadStatus=document.createElement('div');
     uploadStatus.id='audioImportStatus';
     uploadStatus.setAttribute('role','status');
