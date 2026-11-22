@@ -4,6 +4,12 @@ on:
     paths:
       - 'feather-rp2040/**'
       - 'feather-export.js'
+      - 'audio-converter.js'
+      - 'audio-tools.js'
+      - 'auto-motion.js'
+      - 'app.js'
+      - 'index.html'
+      - 'tests/audio_converter.test.cjs'
       - 'tests/test_feather_player.py'
       - '.github/workflows/feather-checks.yml'
   workflow_dispatch:
@@ -23,3 +29,19 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_feather_player.py' -v
       - name: Test Pi clip playback and settings
         run: python -m unittest discover -s tests -p 'test_core.py' -v
+  audio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate browser audio code
+        run: |
+          node --check audio-converter.js
+          node --check audio-tools.js
+          node --check feather-export.js
+          node --check auto-motion.js
+          node --check app.js
+      - name: Test signed PCM WAV encoding and normalization
+        run: node tests/audio_converter.test.cjs

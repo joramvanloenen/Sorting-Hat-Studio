@@ -199,3 +199,11 @@ Fresh installs show a single empty **New Performance**. The old six library entr
 The online editor automatically migrates `sorting-hat-pages-project-v1` into `sorting-hat-pages-project-v2`: previously imported custom recordings are kept, while the old factory entries are hidden. The complete previous project is backed up in localStorage under `sorting-hat-legacy-project-backup-v1`, so edits made to a factory entry are not permanently discarded. Browser-stored audio files are not deleted.
 
 A previously installed Pi stores its own `data/project.json`, so updating the repository alone does not overwrite that file. Backup and replace it with the new blank `data/project.json` if you want the same reset on the Pi.
+
+## Audio converter / RP2040 playback reliability
+
+The browser's **Audio Converter** offers 22.05 kHz (recommended), 16 kHz compact and 32 kHz higher fidelity. Uploads are automatically resampled to mono PCM WAV for reliable browser audition. **Convert & listen** additionally allows converting an existing recording and hearing the result, and **Download WAV** saves the file locally. Conversion is fully offline: it uses Web Audio for downmixing/resampling, compression, DC removal and conservative peak normalization.
+
+The Feather exporter no longer passes through arbitrary MP3s. All exported audio is **16-bit signed mono PCM WAV**, verified before adding to the ZIP. By default it only exports the selected performance to fit the Feather's flash storage; uncheck the selection control for all recorded performances. Missing or undecodable audio now causes a clear error, rather than a silent export.
+
+To distinguish encoding from wiring problems, set `"test_tone_on_boot": true` in the Feather's `config.json` and reboot for a short quiet 440 Hz I²S test tone. If the tone is silent, inspect the amplifier/speaker wiring and power, not the recorded file. Disable it again for normal use.

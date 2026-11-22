@@ -11,6 +11,8 @@ import audiocore
 import json
 import time
 import gc
+import math
+from array import array
 
 CONFIG_PATH = "/config.json"
 PROJECT_PATH = "/project.json"
@@ -20,7 +22,8 @@ DEFAULT_CONFIG = {
     "button_pin": "D9",
     "audio_offset_ms": 0,
     "start_on_boot": False,
-    "clip_id": "intro"
+    "test_tone_on_boot": False,
+    "clip_id": "performance_1"
 }
 
 def clamp(x, lo=0.0, hi=1.0):
@@ -150,6 +153,7 @@ def play_clip(clip, jaw, brow, button, audio, cfg):
                 source, decoder = audio_sample("/" + filename)
                 if audio is None:
                     raise RuntimeError("I2S amplifier not initialized")
+                print("AUDIO START:", filename)
                 audio.play(decoder)
                 audible = True
             except (OSError, ValueError, RuntimeError) as exc:
@@ -210,6 +214,25 @@ def play_selected_clip(project, jaw, brow, button, audio, config):
     play_clip(clip, jaw, brow, button, audio, config)
     print("Ready")
 
+def play_diagnostic_tone(audio):
+    """Small, quiet test beep to identify wiring/I2S problems."""
+    if audio is None:
+        print("TEST TONE: I2S output not available")
+        return
+    rate = 22050
+    count = int(rate * 0.35)
+    samples = array("h")
+    for i in range(count):
+        fade = min(1.0, i / 440.0, (count - i - 1) / 440.0)
+        samples.append(int(4500 * max(0.0, fade) * math.sin(2.0 * math.pi * 440.0 * i / rate)))
+    wave = audiocore.RawSample(samples, sample_rate=rate)
+    print("TEST TONE: 440 Hz / 0.35 seconds")
+    audio.play(wave)
+    while audio.playing:
+        time.sleep(0.01)
+    audio.stop()
+
+
 def main():
     config = load_json(CONFIG_PATH, DEFAULT_CONFIG)
     project = load_json(PROJECT_PATH, {"version": 1, "clips": []})
@@ -223,6 +246,11 @@ def main():
         except Exception as exc:
             print("I2S setup error:", exc, "(servos can still move silently)")
         print("Sorting Hat Feather ready. Press button (D9 to GND).")
+        if config.get("test_tone_on_boot", False):
+            try:
+                play_diagnostic_tone(audio)
+            except Exception as exc:
+                print("TEST TONE ERROR:", exc)
         if config.get("start_on_boot", False):
             play_selected_clip(project, jaw, brow, button, audio, config)
         while True:
