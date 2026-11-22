@@ -13,7 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "feather-rp2040" / "code.py"
 TREE = ast.parse(SOURCE.read_text(encoding="utf-8"), filename=str(SOURCE))
 WANTED = {
-    "clamp", "ease", "sample_track", "selected_clip",
+    "clamp", "ease", "sample_track", "ClipSequencer",
     "Servo", "TriggerButton", "play_clip",
 }
 
@@ -69,7 +69,7 @@ extract = ast.Module(
     type_ignores=[],
 )
 exec(compile(extract, str(SOURCE), "exec"), ENV)
-clamp, sample_track, selected_clip = (ENV[x] for x in ("clamp", "sample_track", "selected_clip"))
+clamp, sample_track, ClipSequencer = (ENV[x] for x in ("clamp", "sample_track", "ClipSequencer"))
 
 
 class MotionTests(unittest.TestCase):
@@ -98,11 +98,36 @@ class MotionTests(unittest.TestCase):
         self.assertTrue(0 <= sample_track(duplicates, 0.5) <= 1)
         self.assertEqual(sample_track([], 0.5, 0.42), 0.42)
 
-    def test_one_selected_clip_not_multi_clip_sequence(self):
-        project = {"clips": [{"id": n} for n in ["intro", "ponder", "house_a"]]}
-        self.assertEqual(selected_clip(project, {"clip_id": "ponder"})["id"], "ponder")
-        self.assertEqual(selected_clip(project, {"clip_id": "missing"})["id"], "intro")
-        self.assertIsNone(selected_clip({"clips": []}, {}))
+    def test_next_button_press_cycles_clips_in_list_order(self):
+        project = {"clips": [
+            {"id": "intro", "audio": "audio/intro.wav"},
+            {"id": "blank", "audio": None},
+            {"id": "middle", "audio": "audio/middle.wav"},
+            {"id": "last", "audio": "audio/last.wav"}
+        ]}
+        player = ClipSequencer(project)
+        self.assertEqual(len(player.clips), 3)
+        self.assertEqual(
+            [player.next_clip()["id"] for _ in range(7)],
+            ["intro", "middle", "last", "intro", "middle", "last", "intro"]
+        )
+
+    def test_empty_project_does_not_play_a_placeholder(self):
+        player = ClipSequencer({"clips": [{"id": "blank", "audio": None}]})
+        self.assertEqual(player.clips, [])
+        self.assertIsNone(player.next_clip())
+        self.assertIsNone(ClipSequencer({"clips": []}).next_clip())
+
+    def test_pressed_during_playback_requests_next_clip(self):
+        FakeTime.now = 0
+        jaw = ENV["Servo"]({"pin":"D4","min_us":1200,"max_us":1750,"rest":0.0})
+        brow = ENV["Servo"]({"pin":"D5","min_us":1200,"max_us":1750,"rest":0.5})
+        button = types.SimpleNamespace(pressed=lambda: True)
+        clip = {"id":"a","duration":.2,"tracks":{"jaw":[],"brow":[]}}
+        finished = ENV["play_clip"](clip,jaw,brow,button,None,{"audio_offset_ms":0})
+        self.assertFalse(finished)
+        self.assertEqual(jaw.pwm.duty_cycle, int(1200 * 65535 / 20000))
+        self.assertEqual(brow.pwm.duty_cycle, int((1200 + .5 * 550) * 65535 / 20000))
 
     def test_pwm_conservative_mapping_and_inversion(self):
         cfg = {"pin": "D4", "rest": 0.0, "min_us": 1200, "max_us": 1750, "invert": False}

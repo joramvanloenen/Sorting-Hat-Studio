@@ -1,5 +1,5 @@
 # Sorting Hat Studio — Adafruit Feather RP2040 (CircuitPython 9/10)
-# Standalone MP3/WAV + two PWM servos + momentary button.
+# Standalone WAV/MP3 + two PWM servos; D9 advances through recordings on each press.
 # Copy code.py, config.json, project.json and audio/ onto CIRCUITPY.
 # No extra .mpy libraries are required.
 import board
@@ -22,8 +22,7 @@ DEFAULT_CONFIG = {
     "button_pin": "D9",
     "audio_offset_ms": 0,
     "start_on_boot": False,
-    "test_tone_on_boot": False,
-    "clip_id": "performance_1"
+    "test_tone_on_boot": False
 }
 
 def clamp(x, lo=0.0, hi=1.0):
@@ -167,7 +166,7 @@ def play_clip(clip, jaw, brow, button, audio, cfg):
         next_frame = start
         while time.monotonic() - start < duration:
             if button.pressed():
-                print("Playback stopped by button")
+                print("Skipping to next recording")
                 return False
             now = time.monotonic()
             t = max(0.0, now - start + offset)
@@ -195,24 +194,24 @@ def play_clip(clip, jaw, brow, button, audio, cfg):
         jaw.home()
         brow.home()
 
-def selected_clip(project, config):
-    """Pick exactly one recording; fall back to the first available clip."""
-    clips = project.get("clips") or []
-    if not clips:
-        return None
-    wanted = config.get("clip_id", "intro")
-    for clip in clips:
-        if clip.get("id") == wanted:
-            return clip
-    return clips[0]
+class ClipSequencer:
+    """Play one recorded clip per button press, cycling in library order.
 
-def play_selected_clip(project, jaw, brow, button, audio, config):
-    clip = selected_clip(project, config)
-    if clip is None:
-        print("No recordings found. Export a Feather pack from Sorting Hat Studio.")
-        return
-    play_clip(clip, jaw, brow, button, audio, config)
-    print("Ready")
+    The exported manifest holds only recordings; fallback filtering lets the
+    player read older manifests that still contain blank/no-audio entries.
+    No automatic multi-clip ceremony or random selection is performed.
+    """
+    def __init__(self, project):
+        self.clips = [clip for clip in project.get("clips", []) if clip.get("audio")]
+        self.position = 0
+
+    def next_clip(self):
+        if not self.clips:
+            return None
+        clip = self.clips[self.position]
+        self.position = (self.position + 1) % len(self.clips)
+        return clip
+
 
 def play_diagnostic_tone(audio):
     """Small, quiet test beep to identify wiring/I2S problems."""
@@ -251,11 +250,27 @@ def main():
                 play_diagnostic_tone(audio)
             except Exception as exc:
                 print("TEST TONE ERROR:", exc)
-        if config.get("start_on_boot", False):
-            play_selected_clip(project, jaw, brow, button, audio, config)
+        sequence = ClipSequencer(project)
+        print("Loaded", len(sequence.clips), "recordings in performance-list order.")
+        # A boot-start counts as the first playback. Otherwise D9 starts #1.
+        advance = bool(config.get("start_on_boot", False))
         while True:
-            if button.pressed():
-                play_selected_clip(project, jaw, brow, button, audio, config)
+            if not advance:
+                advance = button.pressed()
+            if advance:
+                clip = sequence.next_clip()
+                if clip is None:
+                    print("No audio performances available. Export from Sorting Hat Studio.")
+                    advance = False
+                else:
+                    print("Playing:", clip.get("title", clip.get("id", "recording")))
+                    # play_clip returns False if D9 is pressed during playback.
+                    # That press is already debounced/consumed, so immediately
+                    # play the NEXT recording without asking for another press.
+                    finished = play_clip(clip, jaw, brow, button, audio, config)
+                    advance = not finished
+                    if finished:
+                        print("Ready. Press D9 for the next performance.")
             time.sleep(0.02)
     finally:
         if audio:

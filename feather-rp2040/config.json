@@ -16,6 +16,5 @@
   "button_pin": "D9",
   "audio_offset_ms": 0,
   "start_on_boot": false,
-  "clip_id": "performance_1",
   "test_tone_on_boot": false
 }
