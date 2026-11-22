@@ -10,6 +10,7 @@ on:
       - 'app.js'
       - 'index.html'
       - 'tests/audio_converter.test.cjs'
+      - 'tests/feather_export.test.cjs'
       - 'tests/test_feather_player.py'
       - '.github/workflows/feather-checks.yml'
   workflow_dispatch:
@@ -44,4 +45,6 @@ jobs:
           node --check auto-motion.js
           node --check app.js
       - name: Test signed PCM WAV encoding and normalization
-        run: node tests/audio_converter.test.cjs
+        run: |
+          node tests/audio_converter.test.cjs
+          node tests/feather_export.test.cjs
