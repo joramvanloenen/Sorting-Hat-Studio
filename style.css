@@ -44,3 +44,22 @@
 .audio-converter-info[data-status="error"]{color:#f0a6a6}
 .audio-export-scope{display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#c3b5a7;line-height:1.4;cursor:pointer}
 .audio-export-scope input{flex:0 0 auto;margin-top:2px}
+
+/* Audio and performance controls remain compact and accessible in the narrow sidebar. */
+.clip-entry{display:flex;align-items:stretch;border-radius:9px;min-width:0}
+.clip-entry .clip{flex:1;min-width:0;width:auto;padding-right:3px}
+.clip-entry .clip-summary{min-width:0;overflow:hidden}
+.clip-entry .clip-title,.clip-entry .clip-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clip-actions{display:flex;align-items:center;gap:3px;padding-right:4px}
+.clip-actions button{border:1px solid transparent;background:transparent;color:#9d9290;border-radius:6px;cursor:pointer;padding:6px 4px;min-width:24px;font-size:14px;line-height:1;flex:0 0 auto}
+.clip-actions button:hover{border-color:#5b514a;background:#372d2b;color:#ffb6aa}
+.clip-actions .clip-remove-audio{font-size:12px;color:#c7ad83}
+.clip-actions button:disabled{opacity:.23;cursor:default}
+.clip-actions button:disabled:hover{background:transparent;border-color:transparent}
+.clip-actions-hint{font-size:9px;line-height:1.5;color:#827c80;margin:7px 6px 12px}
+@media(max-width:800px){
+ .clip-entry{flex:0 0 auto;min-width:160px}
+ .clip-entry .clip{min-width:90px;padding:7px}
+ .clip-actions{padding-right:3px}
+ .clip-actions-hint{display:block;font-size:10px}
+}

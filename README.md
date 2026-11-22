@@ -207,3 +207,7 @@ The browser's **Audio Converter** offers 22.05 kHz (recommended), 16 kHz compact
 The Feather exporter no longer passes through arbitrary MP3s. All exported audio is **16-bit signed mono PCM WAV**, verified before adding to the ZIP. By default it only exports the selected performance to fit the Feather's flash storage; uncheck the selection control for all recorded performances. Missing or undecodable audio now causes a clear error, rather than a silent export.
 
 To distinguish encoding from wiring problems, set `"test_tone_on_boot": true` in the Feather's `config.json` and reboot for a short quiet 440 Hz I²S test tone. If the tone is silent, inspect the amplifier/speaker wiring and power, not the recorded file. Disable it again for normal use.
+
+## Removing recordings and performances
+
+Each entry in the **Performances** list has two controls. **♫×** removes the audio only, preserving the jaw and brow animation tracks, while **×** deletes the entire performance and all its keyframes. Both require confirmation. The browser removes the normalized WAV and original recording from IndexedDB, clears the clip's `audio` reference, and prevents Feather export from reusing it. The Pi-hosted editor has the same functionality via `DELETE /api/audio/<id>` and `DELETE /api/clip/<id>`, and deletes the corresponding WAV from disk. Deleting the final performance recreates a blank **New Performance** entry.
