@@ -109,9 +109,6 @@ class HatHandler(BaseHTTPRequestHandler):
             if path == "/api/preview":
                 body = self._json_body()
                 return self.respond({"accepted": self.engine.preview(body["jaw"], body["brow"])})
-            if path == "/api/ceremony":
-                self._body(4096)
-                return self.respond({"started": self.engine.start_ceremony()})
             if path.startswith("/api/play/"):
                 self._body(4096)
                 return self.respond({"started": self.engine.start_clip(path.split("/")[-1])})

@@ -60,16 +60,15 @@ class EngineTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_initial_project_and_save(self):
-        self.assertEqual(len(self.engine.get_project()['clips']),6)
+        self.assertEqual(len(self.engine.get_project()['clips']),1)
         c=self.engine.get_project()['clips'][0]
         c['title']='Custom greeting'
         self.engine.save_clip(c['id'],c)
         self.assertEqual(self.engine.get_project()['clips'][0]['title'],'Custom greeting')
         self.assertTrue((self.dir/'project.json').exists())
 
-    def test_ceremony_simulation(self):
-        self.assertTrue(self.engine.start_ceremony())
-        self.assertIn(self.engine.status()['last_house'],h.HOUSES)
+    def test_single_clip_playback(self):
+        self.assertTrue(self.engine.start_clip('intro'))
         self.assertFalse(self.engine.start_clip('intro'))
         self.engine.stop()
         deadline=time.monotonic()+2

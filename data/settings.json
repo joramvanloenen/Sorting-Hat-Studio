@@ -4,7 +4,7 @@
     "min_us": 1200,
     "max_us": 1750,
     "invert": false,
-    "rest": 0.0
+    "rest": 0
   },
   "brow": {
     "gpio": 27,
@@ -16,5 +16,6 @@
   "button_gpio": 22,
   "audio_latency_ms": 65,
   "audio_device": "default",
-  "idle_motion": true
+  "idle_motion": true,
+  "trigger_clip": "intro"
 }

@@ -22,7 +22,6 @@ DATA = ROOT / "data"
 AUDIO = DATA / "audio"
 PROJECT_FILE = DATA / "project.json"
 SETTINGS_FILE = DATA / "settings.json"
-HOUSES = ("gryffindor", "slytherin", "ravenclaw", "hufflepuff")
 
 
 def clip_template(clip_id: str, title: str, duration: float = 4.0) -> dict:
@@ -58,9 +57,7 @@ def initial_project() -> dict:
     return {
         "version": 1,
         "clips": [
-            clip_template("intro", "01 · Awakening", 4),
-            clip_template("ponder", "02 · Considering", 5),
-            *[clip_template("house_" + h, "House · " + h.title(), 3) for h in HOUSES],
+            clip_template("intro", "Sample dialogue", 4),
         ],
     }
 
@@ -70,6 +67,7 @@ def initial_settings() -> dict:
         "jaw": {"gpio": 17, "min_us": 1200, "max_us": 1750, "invert": False, "rest": 0.0},
         "brow": {"gpio": 27, "min_us": 1200, "max_us": 1750, "invert": False, "rest": 0.5},
         "button_gpio": 22,
+        "trigger_clip": "intro",
         "audio_latency_ms": 65,
         "audio_device": "default",
         "idle_motion": True,
@@ -137,6 +135,10 @@ def validate_settings(settings: dict) -> dict:
     if cleaned["jaw"]["gpio"] == cleaned["brow"]["gpio"]:
         raise ValueError("Jaw and brow cannot use the same GPIO")
     cleaned["button_gpio"] = 22
+    trigger = str(settings.get("trigger_clip", "intro"))
+    if not trigger or len(trigger) > 64 or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for c in trigger):
+        raise ValueError("Invalid trigger clip ID")
+    cleaned["trigger_clip"] = trigger
     cleaned["audio_latency_ms"] = max(-250, min(500, int(settings.get("audio_latency_ms", 65))))
     device = str(settings.get("audio_device", "default"))[:64]
     if not device or not all(c.isalnum() or c in ("_", "-", ":", ".", ",", "=") for c in device):
@@ -244,7 +246,6 @@ class HatEngine:
         self.playing = None
         self.position = 0
         self.error = None
-        self.last_house = None
         self.manual = None
         self.manual_until = 0
         self.stop_event = threading.Event()
@@ -257,7 +258,7 @@ class HatEngine:
             try:
                 from gpiozero import Button
                 self.button = Button(self.settings["button_gpio"], pull_up=True, bounce_time=0.25)
-                self.button.when_pressed = self.start_ceremony
+                self.button.when_pressed = self.play_trigger_clip
             except Exception as exc:
                 self.error = f"Button unavailable: {exc}"
 
@@ -265,7 +266,7 @@ class HatEngine:
         with self.lock:
             return {"hardware": self.hardware, "busy": self.busy,
                     "playing": self.playing, "position": round(self.position, 3),
-                    "last_house": self.last_house, "error": self.error,
+                    "error": self.error,
                     "servo_pulses": dict(self.servos.last),
                     "audio_ready": shutil.which("aplay") is not None}
 
@@ -331,25 +332,25 @@ class HatEngine:
                 return False
             if clip_id not in {c["id"] for c in self.project["clips"]}:
                 raise ValueError("Unknown clip")
-            self._start([clip_id])
+            self._start(clip_id)
             return True
 
-    def start_ceremony(self):
+    def play_trigger_clip(self):
+        """Pressing GPIO22 starts the one selected clip, never a sequence."""
         with self.lock:
-            if self.busy:
-                return False
-            house = random.choice(HOUSES)
-            self.last_house = house
-            existing = {c["id"] for c in self.project["clips"]}
-            self._start([c for c in ("intro", "ponder", "house_"+house) if c in existing])
-            return True
+            clip_id = self.settings.get("trigger_clip", "intro")
+            available = {c["id"] for c in self.project["clips"]}
+            if clip_id not in available:
+                clip_id = self.project["clips"][0]["id"] if self.project["clips"] else None
+        if clip_id is not None:
+            self.start_clip(clip_id)
 
-    def _start(self, sequence):
+    def _start(self, clip_id):
         self.busy = True
         self.playing = None
         self.error = None
         self.stop_event.clear()
-        self._queue = sequence
+        self._pending_clip = clip_id
 
     def stop(self):
         self.stop_event.set()
@@ -374,14 +375,12 @@ class HatEngine:
         brow_current = 0.5
         while not self.close_event.is_set():
             with self.lock:
-                sequence = getattr(self, "_queue", None)
-                if sequence is not None:
-                    del self._queue
-            if sequence is not None:
+                clip_id = getattr(self, "_pending_clip", None)
+                if clip_id is not None:
+                    del self._pending_clip
+            if clip_id is not None:
                 try:
-                    for clip_id in sequence:
-                        if self.stop_event.is_set():
-                            break
+                    if not self.stop_event.is_set():
                         self._play_clip(clip_id)
                 except Exception as exc:
                     with self.lock:
