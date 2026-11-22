@@ -1,0 +1,23 @@
+name: Feather RP2040 player checks
+on:
+  push:
+    paths:
+      - 'feather-rp2040/**'
+      - 'feather-export.js'
+      - 'tests/test_feather_player.py'
+      - '.github/workflows/feather-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check firmware syntax
+        run: python -m py_compile feather-rp2040/code.py
+      - name: Test keyframe interpolation, servo pulses, buttons and ceremonies
+        run: python -m unittest discover -s tests -p 'test_feather_player.py' -v
