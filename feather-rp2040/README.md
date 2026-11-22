@@ -24,63 +24,55 @@ Do not attach servo motors to the Feather 3V pin; **never put 5 V on Feather GPI
 
 ## Install and run
 
-1. Download CircuitPython for **Feather RP2040** from [circuitpython.org/board/adafruit_feather_rp2040](https://circuitpython.org/board/adafruit_feather_rp2040/). Install the board-specific **UF2**: hold BOOTSEL while plugging USB into your Windows PC, then copy the UF2 to the **RPI-RP2** drive. The board should restart and show a **CIRCUITPY** drive.
-2. Open the [Sorting Hat Studio browser editor](https://joramvanloenen.github.io/Sorting-Hat-Studio/). Import/edit dialogue and select **Export Feather**. The resulting ZIP holds the files below, including audio; extract its contents to the **root** of **CIRCUITPY**, not a subfolder.
-3. Connect the servos and amp as above, provide a shared ground, and press a button wired between **D9 and GND**. The hat will play **one recording** identified by `clip_id` in `config.json`.
-4. **Press again during playback to stop**. The player stays idle between recordings.
-5. To make the hat speak as soon as power is applied, edit `config.json` and set `"start_on_boot": true`.
+1. Install [CircuitPython for Adafruit Feather RP2040](https://circuitpython.org/board/adafruit_feather_rp2040/) by copying the board-specific UF2 to the **RPI-RP2** bootloader drive. The Feather will restart as the **CIRCUITPY** USB drive.
+2. Open [Sorting Hat Studio](https://joramvanloenen.github.io/Sorting-Hat-Studio/), import dialogue recordings and edit the jaw/brow animations. Their order in the Performances list determines playback order.
+3. Click **Export Feather**. The ZIP includes **every performance with audio**, each with its WAV and jaw/brow motion; empty/no-audio performances are skipped. The editor's Voice Character preset and bass perception processing are rendered into each WAV.
+4. Before transferring a new pack, delete the old `audio/` and `motion/` folders from CIRCUITPY to reclaim space and avoid stale files. Extract the ZIP contents directly into the **root** of CIRCUITPY, replacing `code.py`, `config.json` and `project.json`.
+5. Connect the amplifier, speaker and both SG90 servos according to the wiring table above. The trigger is a momentary button wired between **D9 and GND**. Give the servos their own suitably rated 5V supply with shared GND.
 
-Folder layout of the ZIP:
+### Button behavior
+
+| Action | Playback |
+| --- | --- |
+| First press | First recording |
+| Subsequent presses | Next recording in library order |
+| Press during playback | Skip immediately to the next recording |
+| Press after the last recording | Wrap to the first recording |
+| Switch power off/on | Restart at the first recording |
+
+**Only one recording plays per press.** There is no ceremony mode, automatic multi-clip chain or random house selection.
+
+In `config.json`, `"start_on_boot": true` starts the first recording automatically as soon as the controller has initialized, then button presses advance through the library. The default is `false`, meaning the hat starts silent.
+
+### Files in the ZIP
 
 ```text
 CIRCUITPY/
-  code.py            # player — copied from this folder
-  config.json        # pin mapping and servo calibration
-  project.json       # small clip manifest (kept in RAM)
+  code.py               # standalone Feather player
+  config.json           # servo calibration, button and power-on settings
+  project.json          # all recorded performances, in library order
   motion/
-    intro.json       # jaw/brow keyframes (loaded only when needed)
-    ponder.json
-    ...
+    recording_one.json  # jaw + eyebrow keyframes for #1
+    recording_two.json  # jaw + eyebrow keyframes for #2
   audio/
-    intro.mp3
-    ponder.mp3
-    house_gryffindor.mp3
-    ...
+    recording_one.wav   # processed PCM16 mono audio for #1
+    recording_two.wav   # processed PCM16 mono audio for #2
+  README.txt
 ```
 
-**No external Python libraries needed:** `audiobusio`, `audiomp3`, `audiocore`, `pwmio` and `digitalio` are built into the Feather's CircuitPython firmware. The browser exporter always creates validated mono **16-bit PCM WAV** (22,050 Hz by default). Even MP3/AAC/OGG source files are converted, avoiding incompatible MP3 formats on RP2040.
+No extra libraries are required: CircuitPython already includes `audiobusio`, `audiocore`, `pwmio` and `digitalio`. MP3 and other source formats are converted by the browser to validated **16-bit PCM mono WAV** (22.05 kHz by default). Only one clip's motion keyframes are loaded at a time to conserve RP2040 RAM.
 
-The default exported servo limits are **1200–1750 microseconds**. These are conservative initial values, but your particular linkages may need a smaller range. `config.json` includes `min_us`, `max_us`, `invert`, `rest` per servo, and optional `audio_offset_ms` for synchronization. **Do not attach the servos to the hat until they have been tested at their configured travel range.**
+### Storage limits
 
-## Troubleshooting
+The original Feather RP2040 has **8 MB physical flash**, part of which is occupied by CircuitPython. The editor checks that the ZIP's *uncompressed files* use no more than approximately **5.9 MiB**. At 22.05 kHz/16-bit/mono, audio alone uses approximately 44.1 KB per second. If multiple recordings won't fit, change **Voice quality** to **16 kHz Compact**, shorten/remove some recordings, or add external storage in a later hardware revision. Always delete old WAVs/motion files before installing a new export.
 
-- **No CIRCUITPY drive:** hold BOOTSEL while connecting USB to enter UF2 mode, install board-specific CircuitPython, use a USB **data** cable.
-- **No sound:** confirm A0→BCLK, A1→LRC, A2→DIN, 3V→VIN, GND→GND, speaker to SPK+/SPK−. Verify the ZIP really contains `audio/` files.
-- **Memory errors:** the Feather export deliberately stores animations as separate `motion/<clip>.json` files instead of loading all keyframes into RAM. Use the **Export Feather** feature rather than copying the Pi's much larger project.json directly.
-- **Audio glitches:** use the editor's **Convert & listen** feature, then export again. 22.05 kHz PCM WAV is the recommended voice profile; 16 kHz Compact takes less flash space.
-- **Random servo resets:** power servos from a dedicated regulated 5 V rail and join grounds.
-- **Button does nothing:** check D9 ↔ GND and ensure `project.json` contains clips.
-- **Can't fit ZIP on CIRCUITPY:** delete unused recordings or re-encode large MP3 clips. CircuitPython uses part of the 8 MB flash.
-- **Debugging:** connect a serial terminal (e.g., Mu editor's Serial Console) while USB is connected to read `print()` messages and errors. Do not attach mechanical linkages for the first run.
+### Sound / hardware troubleshooting
 
-**Validation note:** This firmware is written for the Feather RP2040 CircuitPython APIs and matches the existing project JSON format; it cannot be hardware-tested remotely. Validate the wiring and servo travel with the actual board before relying on it for a public performance.
+- **Silent output:** In `config.json` set `"test_tone_on_boot": true` and reboot to play a short, quiet 440 Hz tone. If that's silent, check the amplifier power, shared ground, I²S wiring and speaker terminals. Set this flag back to false after testing.
+- **Audio quality:** Use **Convert & listen** in the online editor. Feather export retains the same Voice Character processing.
+- **Button doesn't advance:** Check D9 ↔ GND (internal pull-up) and verify that `project.json` contains multiple clips with `audio` paths.
+- **New ZIP doesn't fit:** Remove the old `audio/` and `motion/` folders first. ZIP compression makes the download smaller than the actual extracted WAV files.
+- **Debugging:** Use the USB serial console to see the currently playing recording and any decoder errors.
+- **Servos:** Do not connect servo 5 V wires to the Feather 3 V pin; test travel range before attaching the mechanical linkages.
 
-## Behavior
-
-- Fresh power-up: initializes output, enters ready mode without any Wi-Fi or Linux boot.
-- Trigger press: plays only the clip selected with `"clip_id": "performance_1"` (or another clip ID) in `config.json`.
-- During a clip: audio streams to the MAX98357A; jaw and brow values interpolate keyframes at approximately 50 updates/second. `linear`, `smooth`, and `hold` easing are respected.
-- Trigger press during playback: immediately stops the recording and returns the servos to their configured rest positions.
-- `start_on_boot=true`: optionally plays the selected recording on power-up. Leave false when using a brim switch.
-
-The system measures animation time against the monotonic clock after starting the audio decoder. It is **not sample-clock synchronization**; use `audio_offset_ms` to adjust perceived timing if necessary.
-
-**Editor export:** the one-click Feather ZIP now automatically sets `clip_id` to the currently selected editor performance. The bundled blank starter performance contains no speech until you import audio.
-
-### Audio converter / amplifier test
-
-The online studio converts recordings offline to signed 16-bit mono PCM WAV. **Convert & listen** auditions the exact WAV format used on the Feather. The selected recording is exported by default; the ZIP fails rather than silently omitting an unavailable audio file.
-
-For a wiring test that does **not** need any audio file, edit `CIRCUITPY/config.json` and set `"test_tone_on_boot": true`. Reboot the Feather: it should play a short quiet **440 Hz beep** through MAX98357A. If that beep is silent, check VIN, GND, BCLK=A0, LRC=A1, DIN=A2 and the speaker connections (SPK+ / SPK−); converting recordings cannot fix an unpowered/disabled amplifier. Disable the test tone after confirming it works.
-
-If `CIRCUITPY` lacks free space, export only one performance or select **16 kHz Compact**. Copy the ZIP contents to CIRCUITPY root, replacing the previous `code.py`, `config.json`, `project.json`, motion and audio files.
+**Validation:** Automated tests cover clip order, wrapping, button interruptions and WAV packaging. Actual audio volume and mechanical travel still need testing on your physical board.

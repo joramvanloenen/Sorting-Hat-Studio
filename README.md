@@ -204,7 +204,7 @@ A previously installed Pi stores its own `data/project.json`, so updating the re
 
 The browser's **Audio Converter** offers 22.05 kHz (recommended), 16 kHz compact and 32 kHz higher fidelity. Uploads are automatically resampled to mono PCM WAV for reliable browser audition. **Convert & listen** additionally allows converting an existing recording and hearing the result, and **Download WAV** saves the file locally. Conversion is fully offline: it uses Web Audio for downmixing/resampling, compression, DC removal and conservative peak normalization.
 
-The Feather exporter no longer passes through arbitrary MP3s. All exported audio is **16-bit signed mono PCM WAV**, verified before adding to the ZIP. By default it only exports the selected performance to fit the Feather's flash storage; uncheck the selection control for all recorded performances. Missing or undecodable audio now causes a clear error, rather than a silent export.
+The Feather exporter no longer passes through arbitrary MP3s. All exported audio is **16-bit signed mono PCM WAV**, verified before adding to the ZIP. It exports **all performances with audio** in list order and skips blank/no-audio entries. Missing or undecodable audio now causes a clear error, rather than a silent export.
 
 To distinguish encoding from wiring problems, set `"test_tone_on_boot": true` in the Feather's `config.json` and reboot for a short quiet 440 Hz I²S test tone. If the tone is silent, inspect the amplifier/speaker wiring and power, not the recorded file. Disable it again for normal use.
 
@@ -215,3 +215,10 @@ Each entry in the **Performances** list has two controls. **♫×** removes the 
 ## Voice Character (live and Feather export)
 
 The browser editor has **Natural**, **Deep Hat** and **Ancient Hat** voice presets. **Deep Hat** is the default, with the **Bass perception** control initialized to **35%**. This processes the voice using EQ, mild dynamics compression and a low-band harmonic enhancement path, improving perceived depth on small speakers without an extreme sub-bass boost. Play a recording, then change the preset or bass slider to hear the sound change immediately. The live chain processes the original WAV non-destructively; the Feather exporter renders the same filters directly into the **16-bit PCM mono WAV** it packages. The selected profile/strength is recorded in the export's project manifest, and **Download WAV** uses the same processing. Preferences are saved in browser localStorage, not uploaded anywhere.
+
+
+## Feather RP2040 — sequential button player
+
+**Export Feather** includes each recorded performance in the library's displayed order. Pressing the Feather's D9 button plays the next recording with its synchronized jaw and brow animation. A press during playback skips immediately to the next. After the last recording, it wraps back to the first. It does **not** play every file automatically in a ceremony sequence. The sequence resets at power-up. With `"start_on_boot": true`, the first recording plays immediately after initialization.
+
+The original Feather RP2040 has limited flash; the exporter enforces a conservative **5.9 MiB uncompressed** budget. Use 16 kHz Compact or shorten/remove recordings if necessary. When copying a new package to CIRCUITPY, delete old `audio/` and `motion/` folders first to reclaim space.
