@@ -63,3 +63,11 @@
  .clip-actions{padding-right:3px}
  .clip-actions-hint{display:block;font-size:10px}
 }
+
+/* Voice Character: same understated layout as audio converter. */
+.voice-character-panel{border:1px solid #4c4034;border-radius:10px;background:#25211e;padding:12px;margin:12px 0 10px;display:flex;flex-direction:column;gap:8px}
+.voice-character-panel .field{margin:3px 0;font-size:11px}
+.voice-character-panel .field select{width:100%}
+.voice-character-panel .field input[type=range]{width:100%;accent-color:#c79a63}
+.voice-character-panel #voiceBassValue{color:#f0c18e;font-weight:650;float:right}
+.voice-character-panel .audio-converter-info{color:#c4ad90}

@@ -69,7 +69,22 @@
           <button id="generateBtn" class="secondary-button">✦ Generate jaw + eyebrows</button>
           <button id="uploadBtn" class="ghost wide">↑ Import dialogue audio</button><input id="audioFile" type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a" hidden />
           <div class="tip">Drop a WAV or MP3 onto the character or use Import dialogue audio. Recordings are converted to compatible PCM WAV before playback and Feather export.</div>
-           <section class="audio-converter-panel" aria-label="Audio converter">
+           
+             <section class="voice-character-panel" aria-label="Voice Character">
+               <div class="audio-converter-heading"><strong>VOICE CHARACTER</strong><span>LIVE PREVIEW + FEATHER</span></div>
+               <label class="field" for="voicePreset">Voice preset
+                 <select id="voicePreset">
+                   <option value="natural">Natural — clear, balanced</option>
+                   <option value="deep" selected>Deep Hat — warm, resonant</option>
+                   <option value="ancient">Ancient Hat — textured, mysterious</option>
+                 </select>
+               </label>
+               <label class="field" for="voiceBass">Bass perception <span id="voiceBassValue">35%</span>
+                 <input id="voiceBass" type="range" min="0" max="100" step="1" value="35" />
+               </label>
+               <p id="voiceStatus" class="audio-converter-info" role="status">Deep Hat · Bass harmonics 35%</p>
+             </section>
+<section class="audio-converter-panel" aria-label="Audio converter">
              <div class="audio-converter-heading"><strong>AUDIO CONVERTER</strong><span>OFFLINE · PCM WAV</span></div>
              <label class="field" for="wavQuality">Voice quality
                <select id="wavQuality">
@@ -110,9 +125,11 @@
 <div id="toast" class="toast" role="status"></div>
 <script src="./import-monitor.js?v=20261116-4"></script>
 <script src="./app.js?v=audio-list-actions-20261122"></script>
-<script src="./audio-converter.js?v=audio-fix-20261122-1"></script>
+<script src="./voice-character.js?v=voice35-20261122-1"></script>
+<script src="./audio-converter.js?v=voice35-20261122-1"></script>
 <script src="./auto-motion.js?v=audio-list-actions-20261122"></script>
-<script src="./audio-tools.js?v=audio-list-actions-20261122"></script>
-<script src="./feather-export.js?v=audio-safe-20261122-1"></script>
+<script src="./audio-tools.js?v=voice35-20261122-1"></script>
+<script src="./voice-tools.js?v=voice35-20261122-1"></script>
+<script src="./feather-export.js?v=voice35-20261122-1"></script>
 </body>
 </html>

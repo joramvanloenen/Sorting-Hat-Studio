@@ -97,14 +97,17 @@
   source.buffer=decoded;
   // Browser mixes stereo to a mono channel and resamples using its built-in
   // high-quality resampler. Light compression tames speech peaks.
-  const compressor=context.createDynamicsCompressor();
-  compressor.threshold.value=-25;
-  compressor.knee.value=15;
-  compressor.ratio.value=2.5;
-  compressor.attack.value=.005;
-  compressor.release.value=.18;
-  source.connect(compressor);
-  compressor.connect(context.destination);
+  if(options.voice&&root.HatVoiceCharacter){
+   // Same filters, harmonics and compressor as the live browser audition.
+   root.HatVoiceCharacter.createGraph(context,source,context.destination,options.voice);
+  }else{
+   // Uncolored import WAV. Voice styling is applied only at preview/export.
+   const compressor=context.createDynamicsCompressor();
+   compressor.threshold.value=-25;compressor.knee.value=15;
+   compressor.ratio.value=2.5;compressor.attack.value=.005;
+   compressor.release.value=.18;
+   source.connect(compressor);compressor.connect(context.destination);
+  }
   source.start(0);
   const rendered=await context.startRendering();
   const adjusted=normalize(rendered.getChannelData(0),{sampleRate:rate});
