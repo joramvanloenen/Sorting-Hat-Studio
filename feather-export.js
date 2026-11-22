@@ -101,14 +101,10 @@
    ]);
    if(!window.HatAudioConvert)throw Error('Audio converter missing. Refresh the browser.');
    const cfg = JSON.parse(settingsText);
-   // The on-board trigger should play the performance selected in the editor,
-   // not a removed factory demo or the empty starter clip.
-   const selected=state.project?.clips?.find(c=>c.id===state.clip?.id);
-   const onlySelected=document.getElementById('featherSelectedOnly')?.checked!==false;
-   if(onlySelected&&!selected?.audio)throw Error('Select a performance with uploaded audio first.');
-   const clips=onlySelected?[selected]:state.project.clips.filter(c=>c.audio);
-   if(!clips.length)throw Error('There is no audio to export. Import a recording first.');
-   cfg.clip_id=(selected?.audio?selected:clips[0]).id;
+   // Export every recorded performance in the order shown in the editor.
+   const clips=state.project.clips.filter(c=>c.audio);
+   if(!clips.length)throw Error('No performances contain audio. Import a recording first.');
+   delete cfg.clip_id;
    const wavRate=Number(document.getElementById('wavQuality')?.value||22050);
    window.HatAudioConvert.assertRate(wavRate);
    const voice=window.getVoiceSettings?.()||{preset:'deep',bass:35};
@@ -150,18 +146,20 @@
     '3. MAX98357A: A0=BCLK, A1=LRC, A2=DIN, 3V=VIN, GND=GND.\r\n' +
     '4. Jaw servo signal D4; brow servo signal D5; button D9 to GND.\r\n' +
     '5. Servos need a dedicated 5V supply and shared ground.\r\n' +
-    '6. Press the button to play the selected converted PCM WAV clip.\r\n' +
-    '7. For power-on playback: config.json start_on_boot = true.\r\n\r\n' +
+    '6. Each button press plays the next recording in the list.\r\n' +
+    '7. After the final recording, the next press returns to the first.\r\n' +
+    '8. A press during playback skips immediately to the next.\r\n' +
+    '9. For power-on playback: config.json start_on_boot = true.\r\n\r\n' +
     'Full instructions: https://github.com/joramvanloenen/Sorting-Hat-Studio/tree/main/feather-rp2040\r\n'
    )]);
    const byteCount = files.reduce((acc, [,bytes])=>acc+bytes.length,0);
    if (byteCount > 5.9 * 1024 * 1024) {
     throw new Error('The exported files use ' + (byteCount/1048576).toFixed(1) +
-     ' MB. Feather flash is limited. Export one performance or use 16 kHz Compact WAV.');
+     ' MB. Feather flash is limited. Use 16 kHz Compact WAV or shorten/remove recordings.');
    }
    downloadFile('Sorting-Hat-Feather-RP2040.zip', archive(files));
-   toast('Feather pack ready: ' + manifest.clips.length + ' performances, ' +
-    manifest.clips.filter(c=>c.audio).length + ' audio files.' +
+   toast('Feather pack ready: '+manifest.clips.length+' recordings in list order.'+
+    ' Press D9 to play the next recording (wraps to first).' +
     ' PCM16 mono WAV at '+(wavRate/1000).toFixed(2)+' kHz. Extract to CIRCUITPY root.');
   } catch(e) {
    console.error('Feather export failed', e);
