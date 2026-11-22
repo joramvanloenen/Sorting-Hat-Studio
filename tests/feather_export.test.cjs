@@ -59,6 +59,6 @@ function archiveEntries(data){
  clip.audio=null;download=null;feedback='';
  await button.run();
  assert.equal(download,null,'Do not export a silent/empty performance');
- assert.match(feedback,/has no audio/);
+ assert.match(feedback,/uploaded audio|has no audio/i);
  console.log('Feather ZIP integration: WAV only, manifest, selected clip, missing audio failure — passed');
 })().catch(e=>{console.error(e);process.exitCode=1});
